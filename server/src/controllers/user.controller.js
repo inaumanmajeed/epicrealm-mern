@@ -35,9 +35,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // validate user creation
   const createdUser = await User.findById(user._id);
-  //   .select(
-  //   '-password -refreshToken'
-  // );
   if (!createdUser) {
     throw new ApiError(500, 'User creation failed');
   }
