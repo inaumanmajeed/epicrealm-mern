@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { CORS_ORIGIN, LIMIT } from './constants.js';
+import { CORS_ORIGIN, LIMIT, API_ENDPOINT } from './constants.js';
 
 export const app = express();
 
@@ -28,3 +28,9 @@ app.use(
 app.use(cookieParser());
 
 app.use(express.static('public'));
+
+// Import routes
+import userRoutes from './routes/user.routes.js';
+
+// Routes Declaration
+app.use(`${API_ENDPOINT}/users`, userRoutes);
