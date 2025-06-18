@@ -46,6 +46,8 @@ const userSchema = new Schema(
       required: [true, 'Phone number is required'],
       unique: true,
       trim: true,
+      // match number format as +923123456789
+      match: [/^\+?[0-9]{10,15}$/, 'Please enter a valid phone number'],
     },
     refreshToken: {
       type: String,

@@ -4,7 +4,7 @@ class ApiResponse {
     this.message = message;
     this.data = data;
     this.success = status >= 200 && status < 300;
-    this.errors = [];
+    this.errors = null;
   }
 }
 export default ApiResponse;
