@@ -53,6 +53,10 @@ const userSchema = new Schema(
       type: String,
       default: null,
     },
+    accessToken: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,
