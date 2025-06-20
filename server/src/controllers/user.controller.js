@@ -111,21 +111,17 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        refreshToken: null,
-        accessToken: null,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-  } catch (error) {
-    console.error('Error updating user on logout:', error);
-  }
+  await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      refreshToken: null,
+      accessToken: null,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
   return res
     .status(200)
