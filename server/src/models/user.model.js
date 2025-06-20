@@ -90,7 +90,7 @@ userSchema.methods.generateAccessToken = function () {
 };
 
 userSchema.methods.generateRefreshToken = function () {
-  const payload = { id: this._id, username: this.username };
+  const payload = { id: this._id };
   const token = jwt.sign(payload, REFRESH_TOKEN_SECRET, {
     expiresIn: REFRESH_EXPIRY,
   });
