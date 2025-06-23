@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { CORS_ORIGIN, LIMIT, API_ENDPOINT } from './constants.js';
+import apiErrorHandler from './utils/apiErrorHandler.js';
 
 export const app = express();
 
@@ -34,3 +35,5 @@ import userRoutes from './routes/user.routes.js';
 
 // Routes Declaration
 app.use(`${API_ENDPOINT}/users`, userRoutes);
+
+app.use(apiErrorHandler);

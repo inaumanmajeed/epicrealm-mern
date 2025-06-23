@@ -1,10 +1,6 @@
 import axios from "axios";
-import {
-  requestHandler,
-  successHandler,
-  errorHandler,
-} from "./requestModifications";
-import { API_BASE_URL } from "../../constants/apiEndPoints";
+import { requestHandler, successHandler, errorHandler } from "./interceptors";
+import { API_BASE_URL } from "../constants/apiEndPoints";
 
 const httpRequest = (
   config = {
@@ -25,4 +21,4 @@ const httpRequest = (
   return instance;
 };
 
-export default httpRequest();
+export default httpRequest;

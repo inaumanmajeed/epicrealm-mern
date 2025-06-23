@@ -1,12 +1,15 @@
 import React, { useEffect } from "react";
-
 import { Parallax } from "react-parallax";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../layout/Navbar";
 import Preloader from "../layout/preloader";
 import Footer from "../section-pages/footer";
 import ScrollToTopBtn from "../layout/ScrollToTop";
 import { createGlobalStyle } from "styled-components";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import useAuthApi from "../apis/useAuthApi";
+import { isEmail } from "validator";
 
 const image1 = "./img/background/2.webp";
 
@@ -19,7 +22,15 @@ const GlobalStyles = createGlobalStyle`
   }
 `;
 
+const LoginSchema = Yup.object().shape({
+  identifier: Yup.string().required("Email or username is required"),
+  password: Yup.string().required("Password is required"),
+});
+
 export default function Home() {
+  const { login } = useAuthApi();
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const loader = document.getElementById("mainpreloader");
@@ -30,13 +41,12 @@ export default function Home() {
         }, 600);
     }
   }, []);
+
   return (
     <>
       {/* HEAD */}
-
       <link className="logo__img" rel="icon" href="./img/icon.png" />
       <title>EpicRealm - Premium Game Hosting Solutions</title>
-
       <GlobalStyles />
 
       {/* LOADER */}
@@ -66,46 +76,97 @@ export default function Home() {
                       <h4>Sign in to your account</h4>
                     </div>
                     <div className="spacer-10"></div>
-                    <form id="form_register" className="form-border">
-                      <div className="field-set">
-                        <label>Username or email</label>
-                        <input
-                          type="text"
-                          name="name"
-                          id="name"
-                          className="form-control"
-                        />
-                      </div>
-                      <div className="field-set">
-                        <label>Password</label>
-                        <input
-                          type="text"
-                          name="password"
-                          id="password"
-                          className="form-control"
-                        />
-                      </div>
-                      <div className="field-set">
-                        <input
-                          type="checkbox"
-                          value="HTML"
-                          id="html"
-                          name="fav_language"
-                        />
-                        <label>
-                          <span className="op-5">&nbsp;Remember me</span>
-                        </label>
-                        <br />
-                      </div>
-                      <div className="spacer-20"></div>
-                      <div id="submit">
-                        <input
-                          id="send_message"
-                          value="Sign In"
-                          className="btn-main btn-fullwidth rounded-3"
-                        />
-                      </div>
-                    </form>
+                    <Formik
+                      initialValues={{
+                        identifier: "",
+                        password: "",
+                        remember: false,
+                      }}
+                      validationSchema={LoginSchema}
+                      onSubmit={async (
+                        values,
+                        { setSubmitting, setStatus }
+                      ) => {
+                        setStatus(null);
+                        const payload = isEmail(values.identifier)
+                          ? {
+                              email: values.identifier,
+                              password: values.password,
+                            }
+                          : {
+                              userName: values.identifier,
+                              password: values.password,
+                            };
+                        try {
+                          const response = await login.mutateAsync(payload);
+                          navigate("/");
+                        } catch (error) {
+                          setStatus(
+                            error?.response?.data?.message || "Login failed"
+                          );
+                        }
+                        setSubmitting(false);
+                      }}
+                    >
+                      {({ isSubmitting, status }) => (
+                        <Form className="form-border">
+                          <div className="field-set">
+                            <label>Email or Username</label>
+                            <Field
+                              type="text"
+                              name="identifier"
+                              className="form-control"
+                            />
+                            <ErrorMessage
+                              name="identifier"
+                              component="div"
+                              className="text-danger small"
+                            />
+                          </div>
+                          <div className="field-set">
+                            <label>Password</label>
+                            <Field
+                              type="password"
+                              name="password"
+                              className="form-control"
+                            />
+                            <ErrorMessage
+                              name="password"
+                              component="div"
+                              className="text-danger small"
+                            />
+                          </div>
+                          <div className="field-set">
+                            <Field
+                              type="checkbox"
+                              name="remember"
+                              id="remember"
+                            />
+                            <label htmlFor="remember">
+                              <span className="op-5">&nbsp;Remember me</span>
+                            </label>
+                            <br />
+                          </div>
+                          <div className="spacer-20"></div>
+                          {status && (
+                            <div className="text-danger small mb-2">
+                              {status}
+                            </div>
+                          )}
+                          <div id="submit">
+                            <button
+                              type="submit"
+                              className="btn-main btn-fullwidth rounded-3"
+                              disabled={isSubmitting || login.isLoading}
+                            >
+                              {isSubmitting || login.isLoading
+                                ? "Signing In..."
+                                : "Sign In"}
+                            </button>
+                          </div>
+                        </Form>
+                      )}
+                    </Formik>
                     <div className="title-line">
                       Or&nbsp;login&nbsp;up&nbsp;with
                     </div>
