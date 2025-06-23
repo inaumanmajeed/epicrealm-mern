@@ -3,8 +3,12 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  reassignAccessToken,
 } from '../controllers/user.controller.js';
-import { verifyToken } from '../middlewares/auth.middleware.js';
+import {
+  verifyAccessToken,
+  verifyRefreshToken,
+} from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
@@ -13,6 +17,9 @@ router.route('/register').post(registerUser);
 router.route('/login').post(loginUser);
 
 // SECURED ROUTES
-router.route('/logout').post(verifyToken, logoutUser);
+router.route('/logout').post(verifyAccessToken, logoutUser);
+router
+  .route('/refresh-user-token')
+  .post(verifyAccessToken, verifyRefreshToken, reassignAccessToken);
 
 export default router;

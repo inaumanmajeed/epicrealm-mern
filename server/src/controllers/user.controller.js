@@ -130,4 +130,29 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, 'User logged out successfully'));
 });
 
-export { registerUser, loginUser, logoutUser };
+const reassignAccessToken = asyncHandler(async (req, res) => {
+  // This function is used to reassign access token when the user is already logged in and the access token is expired.
+  // It will generate a new access token and return it to the user.
+  if (!req.user) {
+    throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access');
+  }
+  const { accessToken: NewAccessToken, refreshToken: NewRefreshToken } =
+    await generateAccessAndRefreshTokens(req.user.id);
+
+  return res
+    .status(200)
+    .cookie('accessToken', NewAccessToken, cookieOptions)
+    .cookie('refreshToken', NewRefreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        'New access & refresh token generated successfully',
+        {
+          accessToken: NewAccessToken,
+          refreshToken: NewRefreshToken,
+        }
+      )
+    );
+});
+
+export { registerUser, loginUser, logoutUser, reassignAccessToken };
