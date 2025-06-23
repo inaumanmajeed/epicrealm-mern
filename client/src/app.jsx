@@ -50,12 +50,12 @@ const Navigation = () => (
 function App() {
   return (
     // <HelmetProvider>
-      <div>
+      <>
         <BrowserRouter>
           <ScrollToTop />
           <Navigation />
         </BrowserRouter>
-      </div>
+      </>
     // </HelmetProvider>
   );
 }

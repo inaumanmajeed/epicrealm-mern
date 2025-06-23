@@ -39,10 +39,9 @@ export default function Home() {
   return (
     <>
       {/* HEAD */}
-      {/* <Helmet> */}
+
       <link rel="icon" href="./img/icon.png" />
       <title>EpicRealm - Premium Game Hosting Solutions</title>
-      {/* </Helmet> */}
 
       <GlobalStyles />
 

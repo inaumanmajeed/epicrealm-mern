@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-// import { Helmet } from "react-helmet-async";
+
 import { Parallax } from "react-parallax";
 import Navbar from "../layout/Navbar";
 import Preloader from "../layout/preloader";
@@ -28,10 +28,9 @@ export default function Home() {
   return (
     <>
       {/* HEAD */}
-      {/* <Helmet> */}
-        <link className="logo__img" rel="icon" href="./img/icon.png" />
-        <title>EpicRealm - Premium Game Hosting Solutions</title>
-      {/* </Helmet> */}
+
+      <link className="logo__img" rel="icon" href="./img/icon.png" />
+      <title>EpicRealm - Premium Game Hosting Solutions</title>
 
       <GlobalStyles />
 
@@ -52,7 +51,9 @@ export default function Home() {
             <div className="container z-9">
               <div className="row">
                 <div className="col-lg-12">
-                  <div className="subtitle wow fadeInUp mb-3">Interested in</div>
+                  <div className="subtitle wow fadeInUp mb-3">
+                    Interested in
+                  </div>
                 </div>
                 <div className="col-lg-6">
                   <h2>FAQs</h2>

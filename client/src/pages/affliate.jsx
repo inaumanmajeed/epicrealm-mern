@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-// import { Helmet } from "react-helmet-async";
+
 import { Parallax } from "react-parallax";
 import { Link } from "react-router-dom";
 import Navbar from "../layout/Navbar";
@@ -30,10 +30,9 @@ export default function Home() {
   return (
     <>
       {/* HEAD */}
-      {/* <Helmet> */}
-        <link className="logo__img" rel="icon" href="./img/icon.png" />
-        <title>EpicRealm - Premium Game Hosting Solutions</title>
-      {/* </Helmet> */}
+
+      <link className="logo__img" rel="icon" href="./img/icon.png" />
+      <title>EpicRealm - Premium Game Hosting Solutions</title>
 
       <GlobalStyles />
 
@@ -98,9 +97,9 @@ export default function Home() {
                   <h4>Get Your Commision</h4>
                   <p className="justify">
                     Earn commissions for every successful referral! Once your
-                    referrals make a purchase through your link, you will receive
-                    commissions directly to your account. Start earning rewards
-                    for every sale today!
+                    referrals make a purchase through your link, you will
+                    receive commissions directly to your account. Start earning
+                    rewards for every sale today!
                   </p>
                 </div>
               </div>
