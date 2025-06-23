@@ -15,10 +15,13 @@ import "./assets/Home.module.css";
 import "./assets/maincolor.css";
 import "./assets/style.scss";
 import App from "./app.jsx";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <App />
+    <QueryClientProvider client={new QueryClient()}>
+      <App />
+    </QueryClientProvider>
   </React.StrictMode>
 );
