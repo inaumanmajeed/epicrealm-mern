@@ -62,3 +62,12 @@ export const verifyRefreshToken = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access');
   }
 });
+
+export const verifyAdmin = asyncHandler(async (req, res, next) => {
+  // Check if the user is an admin
+  if (req.user && req.user.isAdmin) {
+    return next();
+  }
+  // If not an admin, throw an error
+  throw new ApiError(403, '👮🏻‍♂️ Forbidden: Admins only');
+});
