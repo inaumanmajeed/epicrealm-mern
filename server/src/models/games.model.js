@@ -18,6 +18,16 @@ const gameSchema = new Schema(
         message: 'Please provide a valid image URL',
       },
     },
+    thumbnail: {
+      type: String,
+      required: [true, 'Thumbnail is required'],
+      validate: {
+        validator: function (v) {
+          return /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif))$/i.test(v);
+        },
+        message: 'Please provide a valid thumbnail URL',
+      },
+    },
     rating: {
       type: Number,
       required: [false, 'Rating is required'],
