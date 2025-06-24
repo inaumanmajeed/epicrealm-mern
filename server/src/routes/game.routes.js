@@ -1,10 +1,10 @@
 import { Router } from 'express';
-
 import {
   verifyAccessToken,
   verifyAdmin,
 } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
+import { createGame } from '../controllers/game.controller.js';
 
 const router = Router();
 

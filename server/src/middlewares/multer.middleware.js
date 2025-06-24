@@ -1,14 +1,15 @@
 import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 import { CLOUDINARY_GAMES_FOLDER } from '../constants.js';
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, '../../public/temp');
+    cb(null, './public/temp');
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const uuid = uuidv4();
     const fileExtension = file.originalname.split('.').pop();
-    cb(null, `${CLOUDINARY_GAMES_FOLDER}-${uniqueSuffix}.${fileExtension}`);
+    cb(null, `${CLOUDINARY_GAMES_FOLDER}-${uuid}.${fileExtension}`);
   },
 });
 

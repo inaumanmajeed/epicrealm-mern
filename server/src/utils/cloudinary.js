@@ -2,6 +2,8 @@ import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 import {
   CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET,
   CLOUDINARY_GAMES_FOLDER,
 } from '../constants.js';
 
@@ -21,6 +23,10 @@ const uploadImageOnCloudinary = async (localFilePath) => {
       unique_filename: false,
       resource_type: 'image',
     });
+
+    return {
+      url: response.secure_url,
+    };
   } catch (error) {
     fs.unlinkSync(localFilePath);
     console.error('Error uploading image to Cloudinary:', error);

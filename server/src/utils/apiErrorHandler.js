@@ -8,7 +8,7 @@ const apiErrorHandler = (err, req, res, next) => {
 
   return res
     .status(statusCode)
-    .json(new ApiResponse(statusCode, message, { errors, data }));
+    .json(new ApiResponse(statusCode, message, data, errors));
 };
 
 export default apiErrorHandler;

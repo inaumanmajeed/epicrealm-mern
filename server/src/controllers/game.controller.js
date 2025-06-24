@@ -1,11 +1,12 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
-import { Game } from '../models/game.model.js';
 import uploadImageOnCloudinary from '../utils/cloudinary.js';
+import { Game } from '../models/games.model.js';
+import fs from 'fs';
 
 export const createGame = asyncHandler(async (req, res) => {
-  const { title, rating, totalRating, discount } = req.body;
+  const { title, rating, totalRated, discount } = req.body;
 
   // Validate required fields
   if (!title) {
@@ -18,7 +19,6 @@ export const createGame = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Game with this title already exists');
   }
   const coverImageLocalPath = req?.files?.coverImage?.[0].path;
-  console.log('🚀 ~ createGame ~ coverImageLocalPath:', coverImageLocalPath);
   if (!coverImageLocalPath) {
     throw new ApiError(400, 'Cover image is required');
   }
@@ -35,20 +35,20 @@ export const createGame = asyncHandler(async (req, res) => {
     title,
     coverImage: coverImageUrl.url,
     rating: rating || 0,
-    totalRating: totalRating || 0,
+    totalRated: totalRated || 0,
     discount: discount || 0,
   });
   const game = await Game.findOne({ title });
   if (!game) {
     throw new ApiError(500, 'Failed to create game');
   }
-  console.log('🚀 ~ createGame ~ game:', game);
+  // Clean up local cover image file
+  fs.unlinkSync(coverImageLocalPath);
 
   // Return success response
   return res.status(201).json(
-    new ApiResponse({
-      message: 'Game created successfully',
-      data: game,
+    new ApiResponse(201, `${game.title} created successfully`, {
+      game,
     })
   );
 });

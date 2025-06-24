@@ -32,8 +32,10 @@ app.use(express.static('public'));
 
 // Import routes
 import userRoutes from './routes/user.routes.js';
+import gameRoutes from './routes/game.routes.js';
 
 // Routes Declaration
 app.use(`${API_ENDPOINT}/users`, userRoutes);
+app.use(`${API_ENDPOINT}/games`, gameRoutes);
 
 app.use(apiErrorHandler);
