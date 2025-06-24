@@ -61,6 +61,16 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    subscription: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscription',
+    },
+    subscribedGames: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Game',
+      },
+    ],
   },
   {
     timestamps: true,
@@ -69,6 +79,7 @@ const userSchema = new Schema(
       transform: function (doc, ret) {
         delete ret.password;
         delete ret.refreshToken;
+        delete ret.accessToken;
         return ret;
       },
     },

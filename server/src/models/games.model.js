@@ -35,11 +35,6 @@ const gameSchema = new Schema(
       required: [false, 'Discount is required'],
       default: 0,
     },
-    subScription: {
-      type: Schema.Types.ObjectId,
-      ref: 'Subscription',
-      required: false,
-    },
   },
   {
     timestamps: true,
