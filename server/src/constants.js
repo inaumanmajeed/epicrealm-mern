@@ -8,3 +8,4 @@ export const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 export const ACCESS_EXPIRY = process.env.ACCESS_EXPIRY;
 export const REFRESH_EXPIRY = process.env.REFRESH_EXPIRY;
 export const API_ENDPOINT = process.env.API_ENDPOINT;
+export const NODE_ENV = process.env.NODE_ENV || 'development';

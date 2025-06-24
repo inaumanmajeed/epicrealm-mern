@@ -1,12 +1,17 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useOnclickOutside from "react-cool-onclickoutside";
+import useAuthApi from "../apis/useAuthApi";
 
 const NavLink = (props) => {
   return <Link {...props} />;
 };
 
 const Navbar = () => {
+  const { logout } = useAuthApi();
+  const navigate = useNavigate();
+
+  // Custom hook to handle dropdown state and click outside
   const useDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -29,6 +34,19 @@ const Navbar = () => {
       closeDropdown,
       ref,
     };
+  };
+
+  // Handle logout
+  const handleLogout = async ({ isMobile }) => {
+    try {
+      await logout.mutateAsync();
+      if (!isMobile) {
+        setBtnIcon(!showMenu);
+      }
+      navigate("/login");
+    } catch (error) {
+      console.log("🚀 ~ handleLogout ~ error:", error);
+    }
   };
 
   const {
@@ -62,7 +80,7 @@ const Navbar = () => {
     ref: ref4,
   } = useDropdown();
 
-  const [showmenu, setBtnIcon] = useState(false);
+  const [showMenu, setBtnIcon] = useState(false);
 
   useEffect(() => {
     const header = document.getElementById("header-wrap");
@@ -106,7 +124,7 @@ const Navbar = () => {
 
         {/********* Mobile Menu *********/}
         <div className="mobile">
-          {showmenu && (
+          {showMenu && (
             <div className="menu">
               <div className="navbar-item counter">
                 <div ref={ref}>
@@ -125,7 +143,7 @@ const Navbar = () => {
               </div>
 
               <div className="navbar-item counter">
-                <NavLink to="/location" onClick={() => setBtnIcon(!showmenu)}>
+                <NavLink to="/location" onClick={() => setBtnIcon(!showMenu)}>
                   Locations
                 </NavLink>
               </div>
@@ -149,19 +167,19 @@ const Navbar = () => {
                       <div className="dropdown" onClick={closeMenu2}>
                         <NavLink
                           to="/knowledgebase"
-                          onClick={() => setBtnIcon(!showmenu)}
+                          onClick={() => setBtnIcon(!showMenu)}
                         >
                           Knowledgebase
                         </NavLink>
                         <NavLink
                           to="/faq"
-                          onClick={() => setBtnIcon(!showmenu)}
+                          onClick={() => setBtnIcon(!showMenu)}
                         >
                           FAQ
                         </NavLink>
                         <NavLink
                           to="/contact"
-                          onClick={() => setBtnIcon(!showmenu)}
+                          onClick={() => setBtnIcon(!showMenu)}
                         >
                           Contact
                         </NavLink>
@@ -172,7 +190,7 @@ const Navbar = () => {
               </div>
 
               <div className="navbar-item counter">
-                <NavLink to="/news" onClick={() => setBtnIcon(!showmenu)}>
+                <NavLink to="/news" onClick={() => setBtnIcon(!showMenu)}>
                   News
                 </NavLink>
               </div>
@@ -196,13 +214,13 @@ const Navbar = () => {
                       <div className="dropdown" onClick={closeMenu3}>
                         <NavLink
                           to="/about"
-                          onClick={() => setBtnIcon(!showmenu)}
+                          onClick={() => setBtnIcon(!showMenu)}
                         >
                           About Us
                         </NavLink>
                         <NavLink
                           to="/affliate"
-                          onClick={() => setBtnIcon(!showmenu)}
+                          onClick={() => setBtnIcon(!showMenu)}
                         >
                           Affliates
                         </NavLink>
@@ -231,15 +249,20 @@ const Navbar = () => {
                       <div className="dropdown" onClick={closeMenu4}>
                         <NavLink
                           to="/login"
-                          onClick={() => setBtnIcon(!showmenu)}
+                          onClick={() => setBtnIcon(!showMenu)}
                         >
                           Login
                         </NavLink>
                         <NavLink
                           to="/register"
-                          onClick={() => setBtnIcon(!showmenu)}
+                          onClick={() => setBtnIcon(!showMenu)}
                         >
                           Register
+                        </NavLink>
+                        <NavLink
+                          onClick={() => handleLogout({ isMobile: true })}
+                        >
+                          Logout
                         </NavLink>
                       </div>
                     </div>
@@ -337,6 +360,11 @@ const Navbar = () => {
                       <div className="dropdown" onClick={closeMenu4}>
                         <NavLink to="/login">Login</NavLink>
                         <NavLink to="/register">Register</NavLink>
+                        <NavLink
+                          onClick={() => handleLogout({ isMobile: false })}
+                        >
+                          Logout
+                        </NavLink>
                       </div>
                     </div>
                   )}
@@ -357,7 +385,7 @@ const Navbar = () => {
             className="burgermenu"
             type="button"
             onClick={() => {
-              setBtnIcon(!showmenu);
+              setBtnIcon(!showMenu);
               closeMenu1();
               closeMenu2();
               closeMenu3();

@@ -13,7 +13,11 @@ export const successHandler = (response) => {
 export const errorHandler = (error) => {
   const { status } = error.response || {};
   if (status === 401) {
-    // Handle unauthorized error (e.g., redirect to login, clear store, etc.)
+    document.cookie =
+      "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie =
+      "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    console.log("401 Unauthorized: Authentication cookies cleared");
   }
   return Promise.reject(error);
 };

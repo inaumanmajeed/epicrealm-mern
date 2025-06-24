@@ -9,6 +9,7 @@ import { createGlobalStyle } from "styled-components";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import useAuthApi from "../apis/useAuthApi";
+import { useAuth } from "../context/AuthContext";
 import { isEmail } from "validator";
 
 const image1 = "./img/background/2.webp";
@@ -28,7 +29,8 @@ const LoginSchema = Yup.object().shape({
 });
 
 export default function Home() {
-  const { login } = useAuthApi();
+  const { login: loginMutation } = useAuthApi();
+  const { login: authLogin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -98,11 +100,20 @@ export default function Home() {
                               password: values.password,
                             };
                         try {
-                          const response = await login.mutateAsync(payload);
+                          const response = await loginMutation.mutateAsync(
+                            payload
+                          );
+                          console.log("Login response:", response);
+
                           if (response?.status === 200) {
+                            // Update auth context
+                            authLogin(response.data.user);
+
+                            // Navigate to home
                             navigate("/");
                           }
                         } catch (error) {
+                          console.error("Login error:", error);
                           setStatus(
                             error?.response?.data?.message || "Login failed"
                           );
@@ -159,9 +170,9 @@ export default function Home() {
                             <button
                               type="submit"
                               className="btn-main btn-fullwidth rounded-3"
-                              disabled={isSubmitting || login.isLoading}
+                              disabled={isSubmitting || loginMutation.isLoading}
                             >
-                              {isSubmitting || login.isLoading
+                              {isSubmitting || loginMutation.isLoading
                                 ? "Signing In..."
                                 : "Sign In"}
                             </button>
