@@ -63,3 +63,34 @@ export const createGame = asyncHandler(async (req, res) => {
     })
   );
 });
+
+export const getAllGames = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = req.pagination;
+
+  // Get total count for pagination
+  const totalCount = await Game.countDocuments();
+
+  // Get paginated games
+  const games = await Game.find()
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  if (!games || games.length === 0) {
+    throw new ApiError(404, 'No games found');
+  }
+
+  // Create pagination response using the helper function
+  const response = req.createPaginationResponse(games, totalCount);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        'Games retrieved successfully',
+        response.data,
+        response.pagination
+      )
+    );
+});

@@ -4,11 +4,13 @@ import {
   verifyAdmin,
 } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
-import { createGame } from '../controllers/game.controller.js';
+import { pagination } from '../middlewares/pagination.middleware.js';
+import { createGame, getAllGames } from '../controllers/game.controller.js';
 
 const router = Router();
 
 // SECURED ROUTES
+router.route('/').get(verifyAccessToken, pagination, getAllGames);
 router.route('/create-game').post(
   verifyAccessToken,
   verifyAdmin,
