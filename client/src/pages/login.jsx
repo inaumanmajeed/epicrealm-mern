@@ -99,7 +99,9 @@ export default function Home() {
                             };
                         try {
                           const response = await login.mutateAsync(payload);
-                          navigate("/");
+                          if (response?.status === 200) {
+                            navigate("/");
+                          }
                         } catch (error) {
                           setStatus(
                             error?.response?.data?.message || "Login failed"
