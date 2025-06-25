@@ -6,6 +6,9 @@ import apiErrorHandler from './utils/apiErrorHandler.js';
 
 export const app = express();
 
+// Trust proxy for rate limiting and IP detection
+app.set('trust proxy', 1);
+
 app.use(
   cors({
     origin: CORS_ORIGIN,
@@ -33,9 +36,11 @@ app.use(express.static('public'));
 // Import routes
 import userRoutes from './routes/user.routes.js';
 import gameRoutes from './routes/game.routes.js';
+import contactRoutes from './routes/contact.routes.js';
 
 // Routes Declaration
 app.use(`${API_ENDPOINT}/users`, userRoutes);
 app.use(`${API_ENDPOINT}/games`, gameRoutes);
+app.use(`${API_ENDPOINT}/contact`, contactRoutes);
 
 app.use(apiErrorHandler);

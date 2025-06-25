@@ -684,7 +684,6 @@ h2 {
   background: rgba(255, 255, 255, 0.05);
 }
 
-
 /* preloader */
 #de-loader {
   position: fixed;
@@ -1924,7 +1923,7 @@ h1.slider-title {
   .de_testi_company {
     padding-top: 20px;
   }
-  .adjustments__review{
+  .adjustments__review {
     max-height: 70%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1943,7 +1942,6 @@ h1.slider-title {
     padding: 40px 40px 30px 40px;
     background: var(--bg-dark-2);
     height: 310px;
-    
 
     &::before {
       position: absolute;
@@ -3093,7 +3091,6 @@ h5.title {
 }
 #form_sb .form-control:focus {
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0);
-  
 }
 
 #form_sb #btn-submit i {
@@ -3326,6 +3323,8 @@ p.lead {
   }
 }
 #contact_form input[type="text"],
+#contact_form input[type="tel"],
+#contact_form input[type="email"],
 #contact_form textarea {
   padding: 10px;
   margin-bottom: 20px;
@@ -3343,9 +3342,21 @@ p.lead {
   box-shadow: none;
 }
 #contact_form textarea {
-  height: 259px;
+  height: 368px;
   &::placeholder {
     color: var(--body-font-color);
+  }
+}
+#contact_form {
+  .field-set {
+    position: relative !important;
+  }
+  .invalid-feedback {
+    position: absolute;
+    top: 92%;
+  }
+  textArea {
+    margin-bottom: 0;
   }
 }
 #contact_form {
@@ -3796,7 +3807,6 @@ p.lead {
       }
     }
 
-    
     .mobile {
       position: relative;
       width: 100%;
@@ -3888,5 +3898,3 @@ p.lead {
     width: 100% !important;
   }
 }
-
-

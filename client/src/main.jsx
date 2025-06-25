@@ -16,12 +16,38 @@ import "./assets/maincolor.css";
 import "./assets/style.scss";
 import App from "./app.jsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={new QueryClient()}>
       <App />
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+        containerClassName=""
+        containerStyle={{}}
+        toastOptions={{
+          className: "",
+          duration: 4000,
+          style: {
+            background: "#363636",
+            color: "#fff",
+          },
+          success: {
+            duration: 5000,
+            theme: {
+              primary: "green",
+              secondary: "black",
+            },
+          },
+          error: {
+            duration: 4000,
+          },
+        }}
+      />
     </QueryClientProvider>
   </React.StrictMode>
 );

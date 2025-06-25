@@ -9,4 +9,7 @@ export const apiEndPoints = {
     LOGOUT: "/users/logout",
     REFRESH: "/users/refresh-user-token",
   },
+  contact: {
+    SUBMIT: "/contact",
+  },
 };
