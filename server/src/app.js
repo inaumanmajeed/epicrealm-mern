@@ -7,7 +7,7 @@ import apiErrorHandler from './utils/apiErrorHandler.js';
 export const app = express();
 
 // Trust proxy for rate limiting and IP detection
-app.set('trust proxy', 1);
+// app.set('trust proxy', 1);
 
 app.use(
   cors({

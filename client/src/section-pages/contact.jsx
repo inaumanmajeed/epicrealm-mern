@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
+import Aos from "aos";
 import "aos/dist/aos.css";
 import toast from "react-hot-toast";
 import useContactApi from "../apis/useContactApi";
@@ -7,6 +8,38 @@ import { contactValidationSchema } from "../utils/contactValidationSchema";
 
 export default function Contactus() {
   const { submitContact } = useContactApi();
+
+  useEffect(() => {
+    Aos.init({
+      easing: "ease-out-cubic",
+      once: true,
+      offset: 50,
+    });
+    // Add spinner animation CSS
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      try {
+        document.head.removeChild(style);
+      } catch (e) {
+        console.error("Failed to remove spinner style:", e);
+      }
+    };
+  }, []);
 
   const initialValues = {
     name: "",
@@ -38,7 +71,7 @@ export default function Contactus() {
           result.message ||
             "Your message has been sent successfully! We'll get back to you soon."
         );
-        resetForm();
+        resetForm(); // Reset form on success
       } else {
         // Show error toast for unsuccessful response
         toast.error(
