@@ -164,24 +164,6 @@ export const checkSpamContent = (req, res, next) => {
   }
 };
 
-// Middleware to log contact form submissions for security
-export const logContactSubmission = (req, res, next) => {
-  try {
-    const { name, email } = req.body;
-    const ipAddress = req.ip || req.connection.remoteAddress;
-
-    console.log(
-      `Contact form submission: ${name} (${email}) from ${ipAddress} at ${new Date().toISOString()}`
-    );
-    // TODO LEARN ABOUT WINSTON LOGGER
-
-    next();
-  } catch (error) {
-    console.error('Error logging contact submission:', error);
-    next(); // Continue even if logging fails
-  }
-};
-
 // Combined middleware for contact form submission
 export const contactFormMiddleware = [
   contactRateLimit,
@@ -189,5 +171,4 @@ export const contactFormMiddleware = [
   validateContactForm,
   handleValidationErrors,
   checkSpamContent,
-  logContactSubmission,
 ];
