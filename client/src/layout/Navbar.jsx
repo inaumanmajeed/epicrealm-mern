@@ -219,7 +219,7 @@ const Navbar = () => {
                           About Us
                         </NavLink>
                         <NavLink
-                          to="/affliate"
+                          to="/affiliate"
                           onClick={() => setBtnIcon(!showMenu)}
                         >
                           Affliates
@@ -339,7 +339,7 @@ const Navbar = () => {
                     <div className="item-dropdown">
                       <div className="dropdown" onClick={closeMenu3}>
                         <NavLink to="/about">About Us</NavLink>
-                        <NavLink to="/affliate">Affliates</NavLink>
+                        <NavLink to="/affiliate">Affliates</NavLink>
                       </div>
                     </div>
                   )}

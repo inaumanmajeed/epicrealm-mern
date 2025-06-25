@@ -11,22 +11,10 @@ const gameSchema = new Schema(
     coverImage: {
       type: String,
       required: [true, 'Cover image is required'],
-      validate: {
-        validator: function (v) {
-          return /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif))$/i.test(v);
-        },
-        message: 'Please provide a valid image URL',
-      },
     },
     thumbnail: {
       type: String,
       required: [true, 'Thumbnail is required'],
-      validate: {
-        validator: function (v) {
-          return /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif))$/i.test(v);
-        },
-        message: 'Please provide a valid thumbnail URL',
-      },
     },
     rating: {
       type: Number,

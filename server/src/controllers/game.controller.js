@@ -1,13 +1,16 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
-import uploadImageOnCloudinary from '../utils/cloudinary.js';
+import {
+  uploadImageOnCloudinary,
+  deleteImageFromCloudinary,
+} from '../utils/cloudinary.js';
 import { Game } from '../models/games.model.js';
 import fs from 'fs';
 import mongoose from 'mongoose';
 
 export const createGame = asyncHandler(async (req, res) => {
-  const { title, rating, totalRated, discount } = req.body;
+  const { title, rating, discount } = req.body;
 
   // Validate required fields
   if (!title) {
@@ -45,7 +48,6 @@ export const createGame = asyncHandler(async (req, res) => {
     coverImage: coverImageUrl.url,
     thumbnail: thumbnailUrl.url,
     rating: rating || 0,
-    totalRated: totalRated || 0,
     discount: discount || 0,
   });
   const game = await Game.findOne({ title });
@@ -150,4 +152,65 @@ export const getGameByNameOrId = asyncHandler(async (req, res) => {
         response.meta
       )
     );
+});
+
+export const updateGame = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { title, discount } = req.body;
+
+  // Validate required fields
+  if (!title) {
+    throw new ApiError(400, 'Title is required');
+  }
+
+  // Check if game exists
+  const game = await Game.findById(id);
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+
+  // Update game details
+  game.title = title;
+  game.discount = discount || game.discount;
+
+  // Handle cover image update
+  if (req?.files?.coverImage?.[0]) {
+    const coverImageLocalPath = req.files.coverImage[0].path;
+
+    // Delete previous cover image from Cloudinary if it exists
+    if (game.coverImage) {
+      await deleteImageFromCloudinary(game.coverImage);
+    }
+
+    const coverImageUrl = await uploadImageOnCloudinary(coverImageLocalPath);
+    if (!coverImageUrl) {
+      throw new ApiError(500, 'Failed to upload cover image');
+    }
+    game.coverImage = coverImageUrl.url;
+    fs.unlinkSync(coverImageLocalPath); // Clean up local file
+  }
+
+  // Handle thumbnail update
+  if (req?.files?.thumbnail?.[0]) {
+    const thumbnailLocalPath = req.files.thumbnail[0].path;
+
+    // Delete previous thumbnail from Cloudinary if it exists
+    if (game.thumbnail) {
+      await deleteImageFromCloudinary(game.thumbnail);
+    }
+
+    const thumbnailUrl = await uploadImageOnCloudinary(thumbnailLocalPath);
+    if (!thumbnailUrl) {
+      throw new ApiError(500, 'Failed to upload thumbnail');
+    }
+    game.thumbnail = thumbnailUrl.url;
+    fs.unlinkSync(thumbnailLocalPath); // Clean up local file
+  }
+
+  // Save updated game
+  await game.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, `${game.title} updated successfully`, game));
 });

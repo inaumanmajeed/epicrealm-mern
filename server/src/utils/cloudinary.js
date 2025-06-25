@@ -14,7 +14,7 @@ cloudinary.config({
   api_secret: CLOUDINARY_API_SECRET,
 });
 
-const uploadImageOnCloudinary = async (localFilePath) => {
+export const uploadImageOnCloudinary = async (localFilePath) => {
   try {
     if (!localFilePath) return null;
     const response = await cloudinary.uploader.upload(localFilePath, {
@@ -29,9 +29,26 @@ const uploadImageOnCloudinary = async (localFilePath) => {
     };
   } catch (error) {
     fs.unlinkSync(localFilePath);
+    console.log('🚀 ~ uploadImageOnCloudinary ~ error:', error);
     console.error('Error uploading image to Cloudinary:', error);
     return null;
   }
 };
 
-export default uploadImageOnCloudinary;
+export const deleteImageFromCloudinary = async (imageUrl) => {
+  try {
+    if (!imageUrl) return null;
+
+    // Extract public_id from the URL
+    // Example URL: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/image_name.jpg
+    const urlParts = imageUrl.split('/');
+    const publicIdWithExtension = urlParts.slice(-2).join('/'); // folder/image_name.jpg
+    const publicId = publicIdWithExtension.replace(/\.[^/.]+$/, ''); // Remove file extension
+
+    const response = await cloudinary.uploader.destroy(publicId);
+    return response;
+  } catch (error) {
+    console.error('Error deleting image from Cloudinary:', error);
+    return null;
+  }
+};

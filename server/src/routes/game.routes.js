@@ -9,6 +9,7 @@ import {
   createGame,
   getAllGames,
   getGameByNameOrId,
+  updateGame,
 } from '../controllers/game.controller.js';
 
 const router = Router();
@@ -32,6 +33,21 @@ router.route('/create-game').post(
     },
   ]),
   createGame
+);
+router.route('/:id').patch(
+  verifyAccessToken,
+  verifyAdmin,
+  upload.fields([
+    {
+      name: 'coverImage',
+      maxCount: 1,
+    },
+    {
+      name: 'thumbnail',
+      maxCount: 1,
+    },
+  ]),
+  updateGame
 );
 
 export default router;

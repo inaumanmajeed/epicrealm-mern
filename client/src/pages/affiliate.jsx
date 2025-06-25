@@ -8,7 +8,7 @@ import Footer from "../section-pages/footer";
 import ScrollToTopBtn from "../layout/ScrollToTop";
 import { createGlobalStyle } from "styled-components";
 
-const image1 = "./img/background/subheader-affliate.webp";
+const image1 = "./img/background/subheader-affiliate.webp";
 
 const GlobalStyles = createGlobalStyle`
   .react-parallax-bgimage {
