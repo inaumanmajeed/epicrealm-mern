@@ -38,7 +38,7 @@ export const pagination = (req, res, next) => {
 
       return {
         data,
-        pagination: {
+        meta: {
           currentPage: page,
           totalPages,
           totalCount,

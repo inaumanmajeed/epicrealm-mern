@@ -98,7 +98,6 @@ export const getAllGames = asyncHandler(async (req, res) => {
 
 export const getGameByNameOrId = asyncHandler(async (req, res) => {
   const { idOrName } = req.params;
-  console.log('🚀 ~ getGameByNameOrId ~ idOrName:', idOrName);
 
   // Check if the parameter is a valid ObjectId
   if (mongoose.Types.ObjectId.isValid(idOrName)) {
@@ -116,7 +115,7 @@ export const getGameByNameOrId = asyncHandler(async (req, res) => {
   }
 
   // For title search (or when ObjectId doesn't match), return paginated results
-  const { page, limit, skip } = req.pagination;
+  const { limit, skip } = req.pagination;
 
   // Create search regex for title
   const searchRegex = new RegExp(idOrName, 'i');
@@ -148,7 +147,7 @@ export const getGameByNameOrId = asyncHandler(async (req, res) => {
         200,
         `Found ${totalCount} game(s) matching "${idOrName}"`,
         response.data,
-        response.pagination
+        response.meta
       )
     );
 });
