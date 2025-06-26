@@ -6,7 +6,6 @@ import ApiResponse from '../utils/ApiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 export const createBlog = asyncHandler(async (req, res) => {
-  console.log('🚀 ~ createBlog ~ req:', req.body);
   const { title, content, tags } = req.body;
   if (!title || !content || !tags || tags.length === 0) {
     throw new ApiError(
