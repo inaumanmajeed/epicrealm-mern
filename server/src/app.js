@@ -51,10 +51,12 @@ app.use(express.static('public'));
 import userRoutes from './routes/user.routes.js';
 import gameRoutes from './routes/game.routes.js';
 import contactRoutes from './routes/contact.routes.js';
+import blogRoutes from './routes/blog.routes.js';
 
 // Routes Declaration
 app.use(`${API_ENDPOINT}/users`, userRoutes);
 app.use(`${API_ENDPOINT}/games`, gameRoutes);
 app.use(`${API_ENDPOINT}/contact`, contactRoutes);
+app.use(`${API_ENDPOINT}/blogs`, blogRoutes);
 
 app.use(apiErrorHandler);
