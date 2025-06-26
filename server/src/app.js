@@ -7,11 +7,25 @@ import apiErrorHandler from './utils/apiErrorHandler.js';
 export const app = express();
 
 // Trust proxy for rate limiting and IP detection
-// app.set('trust proxy', 1);
+app.set('trust proxy', 1);
+
+// Configure CORS to handle multiple origins
+const allowedOrigins = CORS_ORIGIN.split(',').map((origin) => origin.trim());
 
 app.use(
   cors({
-    origin: CORS_ORIGIN,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      const msg =
+        'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    },
     credentials: true,
   })
 );
