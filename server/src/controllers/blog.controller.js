@@ -24,6 +24,8 @@ export const createBlog = asyncHandler(async (req, res) => {
   if (!coverImageUrl) {
     throw new ApiError(500, 'Failed to upload cover image');
   }
+  // Clean up local cover image file
+  fs.unlinkSync(coverImageLocalPath);
 
   // Create new blog
   const blog = await Blog.create({
@@ -32,9 +34,6 @@ export const createBlog = asyncHandler(async (req, res) => {
     coverImage: coverImageUrl.url,
     tags,
   });
-
-  // Clean up local cover image file
-  fs.unlinkSync(coverImageLocalPath);
 
   return res
     .status(201)
