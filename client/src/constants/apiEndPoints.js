@@ -12,4 +12,7 @@ export const apiEndPoints = {
   contact: {
     SUBMIT: "/contact",
   },
+  chat: {
+    CHAT: "/chats",
+  },
 };

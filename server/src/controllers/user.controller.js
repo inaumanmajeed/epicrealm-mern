@@ -2,7 +2,6 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { User } from '../models/user.model.js';
-import { cookieOptions } from '../config.js';
 
 // Method to generate refresh token and access token
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -97,17 +96,13 @@ const loginUser = asyncHandler(async (req, res) => {
   // updating the user document with the new refresh token
   // user.refreshToken = refreshToken;
   // console.log('🚀 ~ loginUser ~ user:', user);
-  return res
-    .status(200)
-    .cookie('accessToken', accessToken, cookieOptions)
-    .cookie('refreshToken', refreshToken, cookieOptions)
-    .json(
-      new ApiResponse(200, `${loggedInUser.userName} logged in successfully`, {
-        user: loggedInUser,
-        accessToken,
-        refreshToken,
-      })
-    );
+  return res.status(200).json(
+    new ApiResponse(200, `${loggedInUser.userName} logged in successfully`, {
+      user: loggedInUser,
+      accessToken,
+      refreshToken,
+    })
+  );
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -125,8 +120,6 @@ const logoutUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .clearCookie('accessToken', cookieOptions)
-    .clearCookie('refreshToken', cookieOptions)
     .json(new ApiResponse(200, 'User logged out successfully'));
 });
 
@@ -139,20 +132,12 @@ const reassignAccessToken = asyncHandler(async (req, res) => {
   const { accessToken: NewAccessToken, refreshToken: NewRefreshToken } =
     await generateAccessAndRefreshTokens(req.user.id);
 
-  return res
-    .status(200)
-    .cookie('accessToken', NewAccessToken, cookieOptions)
-    .cookie('refreshToken', NewRefreshToken, cookieOptions)
-    .json(
-      new ApiResponse(
-        200,
-        'New access & refresh token generated successfully',
-        {
-          accessToken: NewAccessToken,
-          refreshToken: NewRefreshToken,
-        }
-      )
-    );
+  return res.status(200).json(
+    new ApiResponse(200, 'New access & refresh token generated successfully', {
+      accessToken: NewAccessToken,
+      refreshToken: NewRefreshToken,
+    })
+  );
 });
 
 export { registerUser, loginUser, logoutUser, reassignAccessToken };

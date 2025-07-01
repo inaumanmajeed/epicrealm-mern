@@ -106,8 +106,11 @@ export default function Home() {
                           console.log("Login response:", response);
 
                           if (response?.status === 200) {
-                            // Update auth context
-                            authLogin(response.data.user);
+                            // Update auth context with user data and tokens
+                            authLogin(response.data.user, {
+                              accessToken: response.data.accessToken,
+                              refreshToken: response.data.refreshToken,
+                            });
 
                             // Navigate to home
                             navigate("/");

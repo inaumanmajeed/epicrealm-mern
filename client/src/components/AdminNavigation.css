@@ -1,0 +1,154 @@
+/* Admin Navigation */
+.admin-navigation {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+}
+
+.admin-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.admin-nav-brand i {
+  font-size: 18px;
+  color: #ffc107;
+}
+
+.admin-nav-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  position: relative;
+  font-weight: 500;
+}
+
+.admin-nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-decoration: none;
+}
+
+.admin-nav-link.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.admin-nav-link i {
+  font-size: 14px;
+}
+
+.unread-badge {
+  position: absolute;
+  top: -2px;
+  right: 8px;
+  background: #dc3545;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 18px;
+  text-align: center;
+}
+
+.admin-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.admin-status {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.admin-name {
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-nav-container {
+    padding: 10px 15px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .admin-nav-links {
+    gap: 15px;
+  }
+
+  .admin-nav-link {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .admin-user-info {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-nav-container {
+    padding: 8px 10px;
+  }
+
+  .admin-nav-brand {
+    font-size: 14px;
+  }
+
+  .admin-nav-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .admin-nav-link span {
+    display: none;
+  }
+
+  .admin-nav-link {
+    padding: 8px;
+    min-width: 40px;
+    justify-content: center;
+  }
+
+  .admin-user-info {
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+  }
+}

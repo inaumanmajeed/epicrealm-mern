@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import httpRequest from "../axios/httpRequest";
 import { apiEndPoints } from "../constants/apiEndPoints";
+import toast from "react-hot-toast";
 
 const useAuthApi = () => {
   const { REGISTER, LOGIN, LOGOUT } = apiEndPoints.auth;
@@ -20,6 +21,9 @@ const useAuthApi = () => {
     mutationFn: async () => {
       const response = await httpRequest().post(LOGOUT);
       return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Logged out successfully");
     },
   });
 

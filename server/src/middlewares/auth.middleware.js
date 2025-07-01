@@ -5,9 +5,12 @@ import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from '../constants.js';
 import { User } from '../models/user.model.js';
 
 export const verifyAccessToken = asyncHandler(async (req, res, next) => {
-  // Check for access token in cookies or Authorization header
+  // Check for access token in Authorization header only
+  const authHeader = req.header('Authorization');
   const token =
-    req.cookies?.accessToken || req.header?.Authorization?.split(' ')[1];
+    authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : null;
 
   // If token is not present, throw an error
   if (!token) {
@@ -35,8 +38,7 @@ export const verifyAccessToken = asyncHandler(async (req, res, next) => {
 });
 
 export const verifyRefreshToken = asyncHandler(async (req, res, next) => {
-  const incomingRefreshToken =
-    req.cookies?.refreshToken || req.body?.refreshToken;
+  const incomingRefreshToken = req.body?.refreshToken;
 
   if (!incomingRefreshToken) {
     throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access');
@@ -70,4 +72,31 @@ export const verifyAdmin = asyncHandler(async (req, res, next) => {
   }
   // If not an admin, throw an error
   throw new ApiError(403, '👮🏻‍♂️ Forbidden: Admins only');
+});
+
+// Optional authentication middleware for support chat
+export const optionalAuth = asyncHandler(async (req, res, next) => {
+  // Check for access token in Authorization header
+  const authHeader = req.header('Authorization');
+  const token =
+    authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : null;
+
+  if (token) {
+    try {
+      const decodedToken = await jwt.verify(token, ACCESS_TOKEN_SECRET);
+      const user = await User.findById(decodedToken.id);
+
+      if (user && user.accessToken === token) {
+        req.user = user;
+      }
+    } catch (error) {
+      // Token is invalid, but that's okay for optional auth
+      console.log('Invalid token in optional auth:', error.message);
+    }
+  }
+
+  // Continue regardless of authentication status
+  next();
 });

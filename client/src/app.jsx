@@ -7,6 +7,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { SupportChatProvider } from "./context/SupportChatContext";
 import Home from "./pages/home";
 import Games from "./pages/games";
 import Pricing from "./pages/pricing";
@@ -19,6 +20,9 @@ import About from "./pages/about";
 import Affiliate from "./pages/affiliate";
 import Login from "./pages/login";
 import Register from "./pages/register";
+import SupportChatPage from "./pages/supportChat";
+import SupportChat from "./components/SupportChat";
+import AdminSupportDashboard from "./components/AdminSupportDashboard";
 
 // Private route wrapper
 function PrivateRoute({ children }) {
@@ -31,6 +35,25 @@ function PrivateRoute({ children }) {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
+// Admin route wrapper
+function AdminRoute({ children }) {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!user?.isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
 // Public route wrapper
 function PublicRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -39,14 +62,10 @@ function PublicRoute({ children }) {
     return <div>Loading...</div>;
   }
 
-  console.log("PublicRoute - isAuthenticated:", isAuthenticated);
-
   if (isAuthenticated) {
-    console.log("User is authenticated, redirecting to home");
     return <Navigate to="/" replace />;
   }
 
-  console.log("User is not authenticated, showing public route");
   return children;
 }
 
@@ -59,57 +78,81 @@ const ScrollToTop = () => {
 };
 
 const AppRoutes = () => {
+  const { isAuthenticated, user } = useAuth();
+
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <Register />
-          </PublicRoute>
-        }
-      />
+    <>
+      <Routes>
+        {/* Public routes */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
 
-      {/* Private routes */}
-      <Route
-        path="/affiliate"
-        element={
-          <PrivateRoute>
-            <Affiliate />
-          </PrivateRoute>
-        }
-      />
+        {/* Admin routes */}
+        <Route
+          path="/admin/support"
+          element={
+            <AdminRoute>
+              <AdminSupportDashboard />
+            </AdminRoute>
+          }
+        />
 
-      {/* Publicly accessible routes */}
-      <Route path="/" element={<Home />} />
-      <Route path="/games" element={<Games />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/location" element={<Location />} />
-      <Route path="/knowledgebase" element={<Knowledgebase />} />
-      <Route path="/faq" element={<Faq />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/news" element={<News />} />
-      <Route path="/about" element={<About />} />
-    </Routes>
+        {/* Support Chat routes - Allow anonymous users */}
+        <Route path="/support" element={<SupportChatPage />} />
+
+        {/* Private routes */}
+        <Route
+          path="/affiliate"
+          element={
+            <PrivateRoute>
+              <Affiliate />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Publicly accessible routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/games" element={<Games />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/location" element={<Location />} />
+        <Route path="/knowledgebase" element={<Knowledgebase />} />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
+
+      {/* Support Chat - Show for all users except admins and when not on admin dashboard */}
+      {!user?.isAdmin &&
+        !window.location.pathname.includes("/support") &&
+        !window.location.pathname.includes("/admin") && <SupportChat />}
+    </>
   );
 };
 
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <AppRoutes />
-      </BrowserRouter>
+      <SupportChatProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <AppRoutes />
+        </BrowserRouter>
+      </SupportChatProvider>
     </AuthProvider>
   );
 }

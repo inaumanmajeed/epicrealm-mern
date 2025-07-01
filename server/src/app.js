@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
 import { CORS_ORIGIN, LIMIT, API_ENDPOINT } from './constants.js';
 import apiErrorHandler from './utils/apiErrorHandler.js';
 
@@ -42,8 +41,6 @@ app.use(
     limit: LIMIT,
   })
 );
-
-app.use(cookieParser());
 
 app.use(express.static('public'));
 

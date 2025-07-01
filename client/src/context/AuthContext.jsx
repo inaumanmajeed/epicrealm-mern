@@ -2,38 +2,37 @@ import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
-// Utility to get cookie value
-function getCookie(name) {
-  if (typeof document === "undefined") return null;
-
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-
-  if (parts.length === 2) {
-    const cookieValue = parts.pop().split(";").shift();
-    return cookieValue;
-  }
-  console.log(`Cookie ${name} not found`);
-  return null;
-}
-
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  console.log("🚀 ~ AuthProvider ~ user:", user);
   const [loading, setLoading] = useState(true);
 
   // Check authentication status
   const checkAuth = () => {
-    if (typeof document === "undefined") {
-      console.log("AuthContext - Document not available (SSR)");
+    if (typeof window === "undefined") {
+      console.log("AuthContext - Window not available (SSR)");
       setLoading(false);
       return false;
     }
 
-    const accessToken = getCookie("accessToken");
-    const refreshToken = getCookie("refreshToken");
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshToken = localStorage.getItem("refreshToken");
+    const storedUser = localStorage.getItem("user");
 
     const isAuth = !!(accessToken && refreshToken);
+
+    // If authenticated and we have stored user data, restore it
+    if (isAuth && storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        console.log("AuthContext - Restored user from localStorage:", userData);
+      } catch (error) {
+        console.error("AuthContext - Error parsing stored user data:", error);
+        localStorage.removeItem("user");
+      }
+    }
 
     // Only update state if the authentication status has actually changed
     setIsAuthenticated((prevAuth) => {
@@ -55,10 +54,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Login function
-  const login = (userData) => {
+  const login = (userData, tokens) => {
     console.log("AuthContext - User logged in:", userData);
+    console.log("AuthContext - Tokens received:", tokens);
     setUser(userData);
     setIsAuthenticated(true);
+
+    // Store user data and tokens in localStorage
+    localStorage.setItem("user", JSON.stringify(userData));
+    if (tokens) {
+      localStorage.setItem("accessToken", tokens.accessToken);
+      localStorage.setItem("refreshToken", tokens.refreshToken);
+      console.log("AuthContext - Tokens stored in localStorage");
+    }
   };
 
   // Logout function
@@ -66,11 +74,10 @@ export const AuthProvider = ({ children }) => {
     console.log("AuthContext - User logged out");
     setUser(null);
     setIsAuthenticated(false);
-    // Clear cookies
-    document.cookie =
-      "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie =
-      "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    // Clear all data from localStorage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
   };
 
   // Check auth on mount and when cookies change

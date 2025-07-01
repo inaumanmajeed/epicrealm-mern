@@ -2,13 +2,15 @@ import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useOnclickOutside from "react-cool-onclickoutside";
 import useAuthApi from "../apis/useAuthApi";
+import { useAuth } from "../context/AuthContext";
 
 const NavLink = (props) => {
   return <Link {...props} />;
 };
 
 const Navbar = () => {
-  const { logout } = useAuthApi();
+  const { logout: logoutApi } = useAuthApi();
+  const { isAuthenticated, user, logout: logoutContext } = useAuth();
   const navigate = useNavigate();
 
   // Custom hook to handle dropdown state and click outside
@@ -39,13 +41,23 @@ const Navbar = () => {
   // Handle logout
   const handleLogout = async ({ isMobile }) => {
     try {
-      await logout.mutateAsync();
+      // Call server logout API
+      await logoutApi.mutateAsync();
+
+      // Call context logout to update state
+      logoutContext();
+
       if (!isMobile) {
         setBtnIcon(!showMenu);
       }
+
+      // Navigate to login page
       navigate("/login");
     } catch (error) {
       console.log("🚀 ~ handleLogout ~ error:", error);
+      // Even if server logout fails, clear local state
+      logoutContext();
+      navigate("/login");
     }
   };
 
@@ -183,6 +195,20 @@ const Navbar = () => {
                         >
                           Contact
                         </NavLink>
+                        <NavLink
+                          to="/support"
+                          onClick={() => setBtnIcon(!showMenu)}
+                        >
+                          Live Chat
+                        </NavLink>
+                        {isAuthenticated && user?.isAdmin && (
+                          <NavLink
+                            to="/admin/support"
+                            onClick={() => setBtnIcon(!showMenu)}
+                          >
+                            Support Dashboard
+                          </NavLink>
+                        )}
                       </div>
                     </div>
                   )}
@@ -316,6 +342,12 @@ const Navbar = () => {
                         <NavLink to="/knowledgebase">Knowledgebase</NavLink>
                         <NavLink to="/faq">FAQ</NavLink>
                         <NavLink to="/contact">Contact</NavLink>
+                        <NavLink to="/support">Live Chat</NavLink>
+                        {isAuthenticated && user?.isAdmin && (
+                          <NavLink to="/admin/support">
+                            Support Dashboard
+                          </NavLink>
+                        )}
                       </div>
                     </div>
                   )}
