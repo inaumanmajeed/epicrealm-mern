@@ -1,25 +1,26 @@
 import { ChatMessage } from '../models/chatMessage.model.js';
 import { Chat } from '../models/chat.model.js';
 
-// Generate consistent anonymous user ID based on socket session, not IP
+// Generating consistent anonymous user ID based on socket session, not IP
 export const getAnonymousUserId = (req, socket) => {
   if (socket) {
-    // For socket connections, use socket ID which is unique per session
+    // For socket connections, using socket ID which is unique per session
     return `anon_${socket.id}`;
   } else if (req) {
-    // For HTTP requests without socket, generate a random session ID
+    // For HTTP requests without socket, generating a random session ID
     // This should ideally be stored in session/cookie, but for now use a timestamp-based ID
     const sessionId =
       req.sessionID ||
-      `http_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      `http_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
     return `anon_${sessionId}`;
   } else {
     // Fallback
-    return `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `anon_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
   }
 };
 
-// Get unread message count for a user
+// ======================== UTILITIES FOR FUTURE USE ========================
+// Get unread message count for a user !! not using right now
 export const getUnreadMessageCount = async (userId) => {
   try {
     const unreadCount = await ChatMessage.aggregate([
@@ -46,6 +47,7 @@ export const getUnreadMessageCount = async (userId) => {
       },
     ]);
 
+    console.log('🚀‼️‼️‼️ ~ getUnreadMessageCount ~ unreadCount:', unreadCount);
     return unreadCount[0]?.unreadCount || 0;
   } catch (error) {
     console.error('Error getting unread message count:', error);
@@ -53,7 +55,7 @@ export const getUnreadMessageCount = async (userId) => {
   }
 };
 
-// Get unread messages for a specific chat
+// Get unread messages for a specific chat !! not using right now
 export const getUnreadMessagesForChat = async (chatId, userId) => {
   try {
     const unreadMessages = await ChatMessage.find({
@@ -70,7 +72,7 @@ export const getUnreadMessagesForChat = async (chatId, userId) => {
   }
 };
 
-// Mark all messages in a chat as read
+// Mark all messages in a chat as read !! not using right now
 export const markAllMessagesAsRead = async (chatId, userId) => {
   try {
     const result = await ChatMessage.updateMany(
@@ -95,7 +97,7 @@ export const markAllMessagesAsRead = async (chatId, userId) => {
   }
 };
 
-// Search messages in a chat
+// Search messages in a chat !! not using right now
 export const searchMessagesInChat = async (
   chatId,
   query,
@@ -157,7 +159,7 @@ export const searchMessagesInChat = async (
   }
 };
 
-// Get chat statistics for admin
+// Get chat statistics for admin !! not using right now
 export const getChatStatistics = async () => {
   try {
     const stats = await Chat.aggregate([
@@ -222,7 +224,7 @@ export const getChatStatistics = async () => {
   }
 };
 
-// Delete old messages (cleanup utility)
+// Delete old messages (cleanup utility) !! not using right now
 export const deleteOldMessages = async (daysOld = 30) => {
   try {
     const cutoffDate = new Date();
@@ -240,7 +242,7 @@ export const deleteOldMessages = async (daysOld = 30) => {
   }
 };
 
-// Export user from chat (for admin)
+// Export user from chat (for admin) !! not using right now
 export const exportChatHistory = async (chatId, userId) => {
   try {
     // Check if user has access to the chat
@@ -287,3 +289,4 @@ export const exportChatHistory = async (chatId, userId) => {
     throw error;
   }
 };
+// ============================================================================
