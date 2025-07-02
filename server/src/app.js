@@ -10,7 +10,6 @@ app.set('trust proxy', 1);
 
 // Configure CORS to handle multiple origins
 const allowedOrigins = CORS_ORIGIN.split(',').map((origin) => origin.trim());
-
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -29,12 +28,14 @@ app.use(
   })
 );
 
+// Middleware to parse JSON and URL-encoded data with a size limit
 app.use(
   express.json({
     limit: LIMIT,
   })
 );
 
+// Middleware to parse URL-encoded data with a size limit
 app.use(
   express.urlencoded({
     extended: true,
@@ -42,6 +43,7 @@ app.use(
   })
 );
 
+// Serve static files from the 'public' directory !! for frontend/client assets
 app.use(express.static('public'));
 
 // Import routes
