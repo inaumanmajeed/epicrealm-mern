@@ -18,8 +18,8 @@ app.set('io', io);
 connectToDatabase()
   .then(() => {
     server.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Socket.IO server initialized`);
+      console.log(`🟢 Server is running on port ${PORT}`);
+      console.log(`🟢 Socket.IO server initialized`);
     });
   })
   .catch((error) => {
