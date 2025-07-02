@@ -559,12 +559,16 @@ const initializeSocketIO = (server) => {
           updateData.unreadByUser = 0;
         }
 
-        const updatedChat = await Chat.findByIdAndUpdate(chatId, updateData, { new: true });
+        const updatedChat = await Chat.findByIdAndUpdate(chatId, updateData, {
+          new: true,
+        });
 
         // If status changed due to auto-assignment, notify all participants
         if (statusChanged && updatedChat) {
-          console.log(`🔄 Chat status changed from ${originalStatus} to ${updatedChat.status} due to admin auto-assignment`);
-          
+          console.log(
+            `🔄 Chat status changed from ${originalStatus} to ${updatedChat.status} due to admin auto-assignment`
+          );
+
           // Notify all participants about status change
           io.to(chatId).emit('support_chat_status_updated', {
             chatId,
@@ -1171,9 +1175,12 @@ const initializeSocketIO = (server) => {
 
     // Handle deleting a single support chat (admin only)
     socket.on('delete_support_chat', async (data) => {
-      console.log('🗑️ Received delete_support_chat event from:', socket.user.userName);
+      console.log(
+        '🗑️ Received delete_support_chat event from:',
+        socket.user.userName
+      );
       console.log('🗑️ Delete data:', data);
-      
+
       try {
         const { chatId } = data;
 
@@ -1184,7 +1191,7 @@ const initializeSocketIO = (server) => {
         }
 
         console.log('🗑️ Admin check passed, finding chat:', chatId);
-        
+
         // Find the chat to delete
         const chat = await Chat.findById(chatId);
         if (!chat) {
@@ -1194,11 +1201,13 @@ const initializeSocketIO = (server) => {
         }
 
         console.log('🗑️ Chat found, deleting messages...');
-        
+
         // Delete all messages in the chat
-        const messageDeleteResult = await ChatMessage.deleteMany({ chat: chatId });
+        const messageDeleteResult = await ChatMessage.deleteMany({
+          chat: chatId,
+        });
         console.log('🗑️ Deleted', messageDeleteResult.deletedCount, 'messages');
-        
+
         // Delete the chat itself
         const chatDeleteResult = await Chat.findByIdAndDelete(chatId);
         console.log('🗑️ Chat deletion result:', !!chatDeleteResult);
@@ -1218,7 +1227,8 @@ const initializeSocketIO = (server) => {
         });
 
         // Notify the user if they're online that their chat has been deleted
-        const userId = typeof chat.user === 'string' ? chat.user : chat.user._id?.toString();
+        const userId =
+          typeof chat.user === 'string' ? chat.user : chat.user._id?.toString();
         if (userId) {
           const userSocketId = userSockets.get(userId);
           if (userSocketId) {
@@ -1240,9 +1250,12 @@ const initializeSocketIO = (server) => {
 
     // Handle deleting all support chats (admin only)
     socket.on('delete_all_support_chats', async (data) => {
-      console.log('🗑️ Received delete_all_support_chats event from:', socket.user.userName);
+      console.log(
+        '🗑️ Received delete_all_support_chats event from:',
+        socket.user.userName
+      );
       console.log('🗑️ Delete all data:', data);
-      
+
       try {
         if (!socket.user.isAdmin) {
           console.log('🗑️ Access denied - user is not admin');
@@ -1251,7 +1264,7 @@ const initializeSocketIO = (server) => {
         }
 
         const { confirmText } = data;
-        
+
         // Safety check - require confirmation text
         if (confirmText !== 'DELETE ALL CHATS') {
           console.log('🗑️ Invalid confirmation text:', confirmText);
@@ -1259,25 +1272,35 @@ const initializeSocketIO = (server) => {
           return;
         }
 
-        console.log('🗑️ Confirmation text valid, proceeding with mass deletion');
+        console.log(
+          '🗑️ Confirmation text valid, proceeding with mass deletion'
+        );
 
         // Get all active chats
         const allChats = await Chat.find({ isActive: true });
-        const chatIds = allChats.map(chat => chat._id);
+        const chatIds = allChats.map((chat) => chat._id);
         console.log('🗑️ Found', allChats.length, 'chats to delete');
 
         // Delete all messages
-        const messageDeleteResult = await ChatMessage.deleteMany({ chat: { $in: chatIds } });
+        const messageDeleteResult = await ChatMessage.deleteMany({
+          chat: { $in: chatIds },
+        });
         console.log('🗑️ Deleted', messageDeleteResult.deletedCount, 'messages');
-        
+
         // Delete all chats
         const chatDeleteResult = await Chat.deleteMany({ isActive: true });
         console.log('🗑️ Deleted', chatDeleteResult.deletedCount, 'chats');
 
-        console.log(`🗑️ Admin ${socket.user.userName} deleted all ${allChats.length} chats`);
+        console.log(
+          `🗑️ Admin ${socket.user.userName} deleted all ${allChats.length} chats`
+        );
 
         // Notify all admins about the mass deletion
-        console.log('🗑️ Notifying', adminSockets.size, 'admins about mass deletion');
+        console.log(
+          '🗑️ Notifying',
+          adminSockets.size,
+          'admins about mass deletion'
+        );
         adminSockets.forEach((socketId, adminId) => {
           io.to(socketId).emit('all_support_chats_deleted', {
             deletedCount: allChats.length,
@@ -1289,20 +1312,26 @@ const initializeSocketIO = (server) => {
         });
 
         // Notify all users that their chats have been deleted
-        allChats.forEach(chat => {
-          const userId = typeof chat.user === 'string' ? chat.user : chat.user._id?.toString();
+        allChats.forEach((chat) => {
+          const userId =
+            typeof chat.user === 'string'
+              ? chat.user
+              : chat.user._id?.toString();
           if (userId) {
             const userSocketId = userSockets.get(userId);
             if (userSocketId) {
               io.to(userSocketId).emit('support_chat_deleted_user', {
                 chatId: chat._id,
-                message: 'All support chats have been cleared by an administrator.',
+                message:
+                  'All support chats have been cleared by an administrator.',
               });
             }
           }
         });
 
-        socket.emit('all_support_chats_delete_success', { deletedCount: allChats.length });
+        socket.emit('all_support_chats_delete_success', {
+          deletedCount: allChats.length,
+        });
         console.log('🗑️ Mass delete operation completed successfully');
       } catch (error) {
         console.error('🗑️ Error deleting all support chats:', error);

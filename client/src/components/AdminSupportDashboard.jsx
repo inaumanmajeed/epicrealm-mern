@@ -16,6 +16,10 @@ const AdminSupportDashboard = () => {
     priority: "",
   });
   const [stats, setStats] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState(null);
+  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState("");
 
   const { user } = useAuth();
   const {
@@ -179,27 +183,35 @@ const AdminSupportDashboard = () => {
     if (!socket) return;
 
     const handleDeleteSuccess = () => {
-      toast.success('Chat deleted successfully');
+      toast.success("Chat deleted successfully");
     };
 
     const handleDeleteAllSuccess = (data) => {
-      toast.success(`All ${data.deletedCount || 'chats'} deleted successfully`, { duration: 4000 });
+      toast.success(
+        `All ${data.deletedCount || "chats"} deleted successfully`,
+        { duration: 4000 }
+      );
     };
 
     const handleError = (error) => {
-      if (error.message && (error.message.includes('delete') || error.message.includes('Delete') || error.message.includes('Access denied'))) {
+      if (
+        error.message &&
+        (error.message.includes("delete") ||
+          error.message.includes("Delete") ||
+          error.message.includes("Access denied"))
+      ) {
         toast.error(error.message);
       }
     };
 
-    socket.on('support_chat_delete_success', handleDeleteSuccess);
-    socket.on('all_support_chats_delete_success', handleDeleteAllSuccess);
-    socket.on('error', handleError);
+    socket.on("support_chat_delete_success", handleDeleteSuccess);
+    socket.on("all_support_chats_delete_success", handleDeleteAllSuccess);
+    socket.on("error", handleError);
 
     return () => {
-      socket.off('support_chat_delete_success', handleDeleteSuccess);
-      socket.off('all_support_chats_delete_success', handleDeleteAllSuccess);
-      socket.off('error', handleError);
+      socket.off("support_chat_delete_success", handleDeleteSuccess);
+      socket.off("all_support_chats_delete_success", handleDeleteAllSuccess);
+      socket.off("error", handleError);
     };
   }, [socket]);
 
@@ -324,36 +336,45 @@ const AdminSupportDashboard = () => {
     }
   };
 
-  // Simple delete functions with toast confirmations
+  // Delete functions with confirmation modals
   const handleDeleteChat = (chat, e) => {
     e.stopPropagation();
+    setChatToDelete(chat);
+    setShowDeleteConfirm(true);
+  };
 
-    // Show confirmation dialog
-    if (window.confirm(`Are you sure you want to delete this chat from ${chat.user?.name || 'Anonymous User'}?`)) {
-      console.log("🗑️ Deleting chat:", chat._id);
-      deleteSupportChat(chat._id);
-      
+  const confirmDeleteChat = () => {
+    if (chatToDelete) {
+      console.log("🗑️ Deleting chat:", chatToDelete._id);
+      deleteSupportChat(chatToDelete._id);
+
       // If this was the selected chat, clear selection
-      if (selectedChat && selectedChat._id === chat._id) {
+      if (selectedChat && selectedChat._id === chatToDelete._id) {
         setSelectedChat(null);
         setMessages([]);
       }
     }
+    setShowDeleteConfirm(false);
+    setChatToDelete(null);
   };
 
   const handleDeleteAllChats = () => {
-    // Show confirmation dialog
-    const confirmText = prompt('Type "DELETE ALL CHATS" to confirm:');
-    if (confirmText === "DELETE ALL CHATS") {
+    setShowDeleteAllConfirm(true);
+  };
+
+  const confirmDeleteAllChats = () => {
+    if (deleteAllConfirmText === "DELETE ALL CHATS") {
       console.log("🗑️ Deleting all chats");
-      deleteAllSupportChats(confirmText);
-      
+      deleteAllSupportChats(deleteAllConfirmText);
+
       // Clear current selection
       setSelectedChat(null);
       setMessages([]);
-    } else if (confirmText !== null) {
+    } else {
       toast.error('Please type "DELETE ALL CHATS" to confirm');
     }
+    setShowDeleteAllConfirm(false);
+    setDeleteAllConfirmText("");
   };
 
   const formatTime = (date) => {
@@ -443,21 +464,26 @@ const AdminSupportDashboard = () => {
           <div className="chats-sidebar">
             <div className="sidebar-header">
               <h3>Support Chats</h3>
-              <button 
+              <button
                 onClick={handleDeleteAllChats}
-                style={{ 
-                  background: '#dc3545', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '4px', 
-                  padding: '4px 8px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  marginLeft: '10px'
+                style={{
+                  background: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  marginLeft: "10px",
                 }}
                 title="Delete All Chats"
               >
-                🗑️ Delete All
+                <i className="fas fa-trash-alt" style={{ color: "white" }}></i>
               </button>
               <div className="filters">
                 <select
@@ -535,18 +561,25 @@ const AdminSupportDashboard = () => {
                         <button
                           onClick={(e) => handleDeleteChat(chat, e)}
                           style={{
-                            background: '#dc3545',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '3px',
-                            padding: '2px 6px',
-                            fontSize: '10px',
-                            cursor: 'pointer',
-                            marginLeft: '5px'
+                            background: "#dc3545",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "50%",
+                            width: "24px",
+                            height: "24px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "10px",
+                            cursor: "pointer",
+                            marginLeft: "5px",
                           }}
                           title="Delete Chat"
                         >
-                          🗑️
+                          <i
+                            className="fas fa-trash"
+                            style={{ color: "white" }}
+                          ></i>
                         </button>
                       </div>
                     </div>
@@ -745,6 +778,105 @@ const AdminSupportDashboard = () => {
             )}
           </div>
         </div>
+
+        {/* Delete Confirmation Modals */}
+        {showDeleteConfirm && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Confirm Delete</h3>
+              <p>
+                Are you sure you want to delete the chat from{" "}
+                <strong>
+                  {chatToDelete?.user?.name ||
+                    chatToDelete?.user?.userName ||
+                    "Anonymous User"}
+                </strong>
+                ?
+              </p>
+              <p style={{ color: "#dc3545", fontSize: "14px" }}>
+                This action cannot be undone.
+              </p>
+              <div className="modal-actions">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="modal-btn cancel-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteChat}
+                  className="modal-btn delete-btn"
+                >
+                  Delete Chat
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDeleteAllConfirm && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Confirm Delete All Chats</h3>
+              <p>
+                Are you sure you want to delete{" "}
+                <strong>ALL support chats</strong>?
+              </p>
+              <p
+                style={{
+                  color: "#dc3545",
+                  fontSize: "14px",
+                  marginBottom: "15px",
+                }}
+              >
+                This action cannot be undone and will permanently remove all
+                chat history.
+              </p>
+              <div style={{ marginBottom: "15px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "5px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Type "DELETE ALL CHATS" to confirm:
+                </label>
+                <input
+                  type="text"
+                  value={deleteAllConfirmText}
+                  onChange={(e) => setDeleteAllConfirmText(e.target.value)}
+                  placeholder="DELETE ALL CHATS"
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    border: "2px solid #ddd",
+                    borderRadius: "4px",
+                    fontSize: "14px",
+                  }}
+                />
+              </div>
+              <div className="modal-actions">
+                <button
+                  onClick={() => {
+                    setShowDeleteAllConfirm(false);
+                    setDeleteAllConfirmText("");
+                  }}
+                  className="modal-btn cancel-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteAllChats}
+                  className="modal-btn delete-btn"
+                  disabled={deleteAllConfirmText !== "DELETE ALL CHATS"}
+                >
+                  Delete All Chats
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

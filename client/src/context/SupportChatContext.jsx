@@ -333,7 +333,7 @@ export const SupportChatProvider = ({ children }) => {
     // Handle chat deletion events
     socketInstance.on("support_chat_deleted", (data) => {
       const { chatId } = data;
-      
+
       // Remove from chats state
       setChats((prev) => {
         const updated = { ...prev };
@@ -366,7 +366,7 @@ export const SupportChatProvider = ({ children }) => {
     socketInstance.on("support_chat_deleted_user", (data) => {
       // For users - their chat was deleted by admin
       const { chatId } = data;
-      
+
       // Remove from local state
       setChats((prev) => {
         const updated = { ...prev };

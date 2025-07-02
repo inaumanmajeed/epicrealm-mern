@@ -781,79 +781,107 @@
   z-index: 10000;
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
 .modal-content {
   background: white;
-  padding: 30px;
-  border-radius: 12px;
-  max-width: 400px;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
   width: 90%;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
 }
 
 .modal-content h3 {
-  margin: 0 0 15px 0;
+  margin: 0 0 16px 0;
   color: #333;
   font-size: 20px;
+  font-weight: 600;
 }
 
 .modal-content p {
-  margin: 0 0 20px 0;
+  margin: 0 0 12px 0;
   color: #666;
   line-height: 1.5;
 }
 
-.delete-confirmation-input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-bottom: 20px;
-  outline: none;
-}
-
-.delete-confirmation-input:focus {
-  border-color: #dc3545;
-}
-
 .modal-actions {
   display: flex;
-  gap: 10px;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
 }
 
-.cancel-button {
-  background: #6c757d;
-  color: white;
+.modal-btn {
+  padding: 10px 20px;
   border: none;
   border-radius: 6px;
-  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  min-width: 100px;
 }
 
-.cancel-button:hover {
-  background: #5a6268;
+.cancel-btn {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
 }
 
-.confirm-button {
-  background: #dc3545;
+.cancel-btn:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.delete-btn {
+  background-color: #dc3545;
   color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  cursor: pointer;
-  transition: background 0.2s ease;
 }
 
-.confirm-button:hover:not(:disabled) {
-  background: #c82333;
+.delete-btn:hover:not(:disabled) {
+  background-color: #c82333;
 }
 
-.confirm-button:disabled {
-  background: #6c757d;
+.delete-btn:disabled {
+  background-color: #6c757d;
   cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Responsive Design */
@@ -932,4 +960,17 @@
   .modal-actions {
     flex-direction: column;
   }
+}
+
+/* Delete Button Hover Effects */
+.chat-item button[title="Delete Chat"]:hover {
+  background: #c82333 !important;
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}
+
+.sidebar-header button[title="Delete All Chats"]:hover {
+  background: #c82333 !important;
+  transform: scale(1.1);
+  transition: all 0.2s ease;
 }
