@@ -84,7 +84,8 @@
   font-size: 14px;
 }
 
-.admin-status {
+.admin-status,
+.admin-name {
   background: rgba(255, 193, 7, 0.2);
   color: #ffc107;
   padding: 4px 8px;
@@ -92,10 +93,6 @@
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-}
-
-.admin-name {
-  font-weight: 500;
 }
 
 /* Responsive Design */

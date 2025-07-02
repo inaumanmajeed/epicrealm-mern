@@ -330,6 +330,71 @@ export const SupportChatProvider = ({ children }) => {
       }
     });
 
+    // Handle chat deletion events
+    socketInstance.on("support_chat_deleted", (data) => {
+      const { chatId } = data;
+      
+      // Remove from chats state
+      setChats((prev) => {
+        const updated = { ...prev };
+        delete updated[chatId];
+        return updated;
+      });
+
+      // Remove from messages state
+      setMessages((prev) => {
+        const updated = { ...prev };
+        delete updated[chatId];
+        return updated;
+      });
+
+      // Remove from unread counts
+      setUnreadCounts((prev) => {
+        const updated = { ...prev };
+        delete updated[chatId];
+        return updated;
+      });
+    });
+
+    socketInstance.on("all_support_chats_deleted", (data) => {
+      // Clear all chats, messages, and unread counts
+      setChats({});
+      setMessages({});
+      setUnreadCounts({});
+    });
+
+    socketInstance.on("support_chat_deleted_user", (data) => {
+      // For users - their chat was deleted by admin
+      const { chatId } = data;
+      
+      // Remove from local state
+      setChats((prev) => {
+        const updated = { ...prev };
+        delete updated[chatId];
+        return updated;
+      });
+
+      setMessages((prev) => {
+        const updated = { ...prev };
+        delete updated[chatId];
+        return updated;
+      });
+
+      // Show notification (you can customize this)
+      console.log("Your support chat has been closed by an administrator");
+    });
+
+    // Listen for delete success events
+    socketInstance.on("support_chat_delete_success", (data) => {
+      console.log("🗑️ Single chat delete success:", data);
+      // Success is handled in the component
+    });
+
+    socketInstance.on("all_support_chats_delete_success", (data) => {
+      console.log("🗑️ All chats delete success:", data);
+      // Success is handled in the component
+    });
+
     socketInstance.on("error", (error) => {
       // Only log unexpected errors, not "Chat not found" which is expected for new users
       if (error.message !== "Chat not found") {
@@ -430,6 +495,24 @@ export const SupportChatProvider = ({ children }) => {
     }
   };
 
+  const deleteSupportChat = (chatId) => {
+    console.log("🗑️ deleteSupportChat called with chatId:", chatId);
+    console.log("🗑️ Socket exists:", !!socket);
+    console.log("🗑️ User is admin:", user?.isAdmin);
+    if (socket && user?.isAdmin) {
+      console.log("🗑️ Emitting delete_support_chat event");
+      socket.emit("delete_support_chat", { chatId });
+    } else {
+      console.log("🗑️ Cannot delete - missing socket or not admin");
+    }
+  };
+
+  const deleteAllSupportChats = (confirmText) => {
+    if (socket && user?.isAdmin) {
+      socket.emit("delete_all_support_chats", { confirmText });
+    }
+  };
+
   const value = {
     socket,
     isConnected,
@@ -453,6 +536,8 @@ export const SupportChatProvider = ({ children }) => {
     setUnreadCounts,
     requestAllChats,
     requestChatStats,
+    deleteSupportChat,
+    deleteAllSupportChats,
   };
 
   return (

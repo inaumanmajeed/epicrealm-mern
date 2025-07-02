@@ -41,16 +41,6 @@ const AdminNavigation = () => {
             )}
           </Link>
 
-          <Link
-            to="/admin/test"
-            className={`admin-nav-link ${
-              location.pathname === "/admin/test" ? "active" : ""
-            }`}
-          >
-            <i className="fas fa-flask"></i>
-            <span>Test Panel</span>
-          </Link>
-
           <Link to="/" className="admin-nav-link">
             <i className="fas fa-home"></i>
             <span>Main Site</span>
@@ -58,7 +48,6 @@ const AdminNavigation = () => {
         </nav>
 
         <div className="admin-user-info">
-          <span className="admin-status">Admin</span>
           <span className="admin-name">{user.name}</span>
         </div>
       </div>

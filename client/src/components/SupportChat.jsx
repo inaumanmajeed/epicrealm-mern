@@ -257,7 +257,7 @@ const SupportChat = () => {
           <h4>Support Chat</h4>
           {isNameSet && (
             <div className="user-info">
-              <span className="username">@{userName}</span>
+              <span className="username username-white">@{userName}</span>
             </div>
           )}
           <div className="chat-status">

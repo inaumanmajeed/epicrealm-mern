@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSupportChat } from "../context/SupportChatContext";
 import { useAuth } from "../context/AuthContext";
 import AdminNavigation from "./AdminNavigation";
+import toast from "react-hot-toast";
 import "./AdminSupportDashboard.css";
 
 const AdminSupportDashboard = () => {
@@ -19,6 +20,7 @@ const AdminSupportDashboard = () => {
   const { user } = useAuth();
   const {
     isConnected,
+    socket,
     joinSupportChat,
     leaveSupportChat,
     sendSupportMessage,
@@ -31,6 +33,8 @@ const AdminSupportDashboard = () => {
     unreadCounts,
     requestAllChats,
     requestChatStats,
+    deleteSupportChat,
+    deleteAllSupportChats,
   } = useSupportChat();
 
   // Memoized functions to prevent infinite re-renders
@@ -170,6 +174,35 @@ const AdminSupportDashboard = () => {
     filters.priority,
   ]); // Use specific filter properties
 
+  // Listen for delete success and error events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleDeleteSuccess = () => {
+      toast.success('Chat deleted successfully');
+    };
+
+    const handleDeleteAllSuccess = (data) => {
+      toast.success(`All ${data.deletedCount || 'chats'} deleted successfully`, { duration: 4000 });
+    };
+
+    const handleError = (error) => {
+      if (error.message && (error.message.includes('delete') || error.message.includes('Delete') || error.message.includes('Access denied'))) {
+        toast.error(error.message);
+      }
+    };
+
+    socket.on('support_chat_delete_success', handleDeleteSuccess);
+    socket.on('all_support_chats_delete_success', handleDeleteAllSuccess);
+    socket.on('error', handleError);
+
+    return () => {
+      socket.off('support_chat_delete_success', handleDeleteSuccess);
+      socket.off('all_support_chats_delete_success', handleDeleteAllSuccess);
+      socket.off('error', handleError);
+    };
+  }, [socket]);
+
   const handleChatSelect = (chat) => {
     if (selectedChat) {
       leaveSupportChat(selectedChat._id);
@@ -291,6 +324,38 @@ const AdminSupportDashboard = () => {
     }
   };
 
+  // Simple delete functions with toast confirmations
+  const handleDeleteChat = (chat, e) => {
+    e.stopPropagation();
+
+    // Show confirmation dialog
+    if (window.confirm(`Are you sure you want to delete this chat from ${chat.user?.name || 'Anonymous User'}?`)) {
+      console.log("🗑️ Deleting chat:", chat._id);
+      deleteSupportChat(chat._id);
+      
+      // If this was the selected chat, clear selection
+      if (selectedChat && selectedChat._id === chat._id) {
+        setSelectedChat(null);
+        setMessages([]);
+      }
+    }
+  };
+
+  const handleDeleteAllChats = () => {
+    // Show confirmation dialog
+    const confirmText = prompt('Type "DELETE ALL CHATS" to confirm:');
+    if (confirmText === "DELETE ALL CHATS") {
+      console.log("🗑️ Deleting all chats");
+      deleteAllSupportChats(confirmText);
+      
+      // Clear current selection
+      setSelectedChat(null);
+      setMessages([]);
+    } else if (confirmText !== null) {
+      toast.error('Please type "DELETE ALL CHATS" to confirm');
+    }
+  };
+
   const formatTime = (date) => {
     return new Date(date).toLocaleString();
   };
@@ -378,6 +443,22 @@ const AdminSupportDashboard = () => {
           <div className="chats-sidebar">
             <div className="sidebar-header">
               <h3>Support Chats</h3>
+              <button 
+                onClick={handleDeleteAllChats}
+                style={{ 
+                  background: '#dc3545', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '4px', 
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  marginLeft: '10px'
+                }}
+                title="Delete All Chats"
+              >
+                🗑️ Delete All
+              </button>
               <div className="filters">
                 <select
                   value={filters.status}
@@ -451,6 +532,22 @@ const AdminSupportDashboard = () => {
                         >
                           {chat.priority}
                         </span>
+                        <button
+                          onClick={(e) => handleDeleteChat(chat, e)}
+                          style={{
+                            background: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '3px',
+                            padding: '2px 6px',
+                            fontSize: '10px',
+                            cursor: 'pointer',
+                            marginLeft: '5px'
+                          }}
+                          title="Delete Chat"
+                        >
+                          🗑️
+                        </button>
                       </div>
                     </div>
                     <div className="chat-item-body">
