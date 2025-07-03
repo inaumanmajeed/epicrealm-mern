@@ -26,6 +26,8 @@ export const SupportChatProvider = ({ children }) => {
   const [chats, setChats] = useState({}); // Store complete chat objects
   const [unreadCounts, setUnreadCounts] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
+  console.log("User is typing in chat:", typingUsers);
+
   const { user } = useAuth();
 
   useEffect(() => {
@@ -215,7 +217,6 @@ export const SupportChatProvider = ({ children }) => {
         [data.chatId]: { ...data, isTyping: true },
       }));
     });
-
     socketInstance.on("user_stop_typing_support", (data) => {
       setTypingUsers((prev) => {
         const newState = { ...prev };

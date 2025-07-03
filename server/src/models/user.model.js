@@ -83,6 +83,14 @@ const userSchema = new Schema(
         return ret;
       },
     },
+    toObject: {
+      transform: function (doc, ret) {
+        delete ret.password;
+        delete ret.refreshToken;
+        delete ret.accessToken;
+        return ret;
+      },
+    },
   }
 );
 userSchema.pre('save', async function (next) {

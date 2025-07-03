@@ -35,6 +35,8 @@ const SupportChat = () => {
     unreadCounts,
     typingUsers,
   } = useSupportChat();
+  useEffect(() => {
+  });
 
   useEffect(() => {
     // Check if user is authenticated or if anonymous user has set a name

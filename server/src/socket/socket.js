@@ -7,6 +7,11 @@ import { ACCESS_TOKEN_SECRET } from '../constants.js';
 import { getAnonymousUserId } from '../utils/chatUtils.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
+// Store active socket connections
+const activeUsers = new Map();
+const userSockets = new Map();
+const adminSockets = new Map();
+
 // Helper function to populate message sender consistently || wrapper for response to client
 const populateMessageSender = asyncHandler(
   async (messageObj, chatRecord = null) => {
@@ -69,12 +74,35 @@ const populateMessageSender = asyncHandler(
   }
 );
 
-// Store active socket connections
-const activeUsers = new Map();
-const userSockets = new Map();
-const adminSockets = new Map();
+// Helper function to join user to their support chat rooms
+const joinUserSupportChats = asyncHandler(async (socket) => {
+  try {
+    let userChats;
 
+    if (socket.user.isAdmin) {
+      // Admins join all active support chats
+      userChats = await Chat.find({
+        isActive: true,
+      }).select('_id');
+    } else {
+      // Users join only their own support chats
+      userChats = await Chat.find({
+        user: socket.user._id,
+        isActive: true,
+      }).select('_id');
+    }
+
+    userChats.forEach((chat) => {
+      socket.join(chat._id.toString());
+    });
+  } catch (error) {
+    console.error('Error joining user support chats:', error);
+  }
+});
+
+// Initialize Socket.IO with authentication and event handling
 const initializeSocketIO = (server) => {
+  // Create a new Socket.IO server instance
   const io = new Server(server, {
     cors: {
       origin: process.env.CORS_ORIGIN?.split(',') || '*',
@@ -83,37 +111,60 @@ const initializeSocketIO = (server) => {
   });
 
   // Socket authentication middleware
-  io.use(async (socket, next) => {
-    try {
-      const token = socket.handshake.auth?.token;
+  io.use(
+    asyncHandler(async (socket, next) => {
+      try {
+        const token = socket.handshake.auth?.token;
 
-      if (token) {
-        // If token provided, verify it
-        const decodedToken = jwt.verify(token, ACCESS_TOKEN_SECRET);
-        console.log(
-          '🔐 Socket auth - Token decoded, user ID:',
-          decodedToken.id
-        );
+        if (token) {
+          // If token provided, verify it
+          const decodedToken = jwt.verify(token, ACCESS_TOKEN_SECRET);
 
-        const user = await User.findById(decodedToken.id).select(
-          '-password -refreshToken'
-        );
-        console.log(
-          '🔐 Socket auth - User found:',
-          user ? user.userName : 'Not found'
-        );
+          const user = await User.findById(decodedToken.id);
 
-        if (user) {
-          socket.user = user;
-          console.log('✅ Socket auth - Authenticated as:', user.userName);
+          if (user) {
+            socket.user = user;
+          } else {
+            throw new Error('Invalid authentication token');
+          }
         } else {
-          throw new Error('Invalid authentication token');
-        }
-      } else {
-        console.log('🔐 Socket auth - No token, using anonymous mode');
-        // Allow anonymous users for support chat
-        const anonymousUserId = getAnonymousUserId(null, socket);
+          // Allow anonymous users for support chat
+          const anonymousUserId = getAnonymousUserId(null, socket);
 
+          socket.user = {
+            _id: anonymousUserId,
+            userName: `Anonymous_${socket.id.substring(0, 6)}`,
+            name: `Anonymous User`,
+            email: null,
+            isAdmin: false,
+            isAnonymous: true,
+          };
+        }
+
+        next();
+      } catch (error) {
+        console.error('Socket authentication error:', error.message);
+
+        // Check if it's a JWT-related error
+        const isJWTError =
+          error.name === 'JsonWebTokenError' ||
+          error.name === 'TokenExpiredError' ||
+          error.name === 'NotBeforeError';
+
+        if (isJWTError) {
+          // Pass JWT error to client but still allow connection as anonymous
+          socket.emit('auth_error', {
+            type: error.name,
+            message: error.message,
+            code:
+              error.name === 'TokenExpiredError'
+                ? 'TOKEN_EXPIRED'
+                : 'TOKEN_INVALID',
+          });
+        }
+
+        // For invalid tokens, still allow as anonymous
+        const anonymousUserId = getAnonymousUserId(null, socket);
         socket.user = {
           _id: anonymousUserId,
           userName: `Anonymous_${socket.id.substring(0, 6)}`,
@@ -122,50 +173,13 @@ const initializeSocketIO = (server) => {
           isAdmin: false,
           isAnonymous: true,
         };
-        console.log('✅ Socket auth - Anonymous user:', socket.user._id);
+        next();
       }
+    })
+  );
 
-      next();
-    } catch (error) {
-      console.error('Socket authentication error:', error.message);
-
-      // Check if it's a JWT-related error
-      const isJWTError =
-        error.name === 'JsonWebTokenError' ||
-        error.name === 'TokenExpiredError' ||
-        error.name === 'NotBeforeError';
-
-      if (isJWTError) {
-        // Pass JWT error to client but still allow connection as anonymous
-        socket.emit('auth_error', {
-          type: error.name,
-          message: error.message,
-          code:
-            error.name === 'TokenExpiredError'
-              ? 'TOKEN_EXPIRED'
-              : 'TOKEN_INVALID',
-        });
-      }
-
-      // For invalid tokens, still allow as anonymous
-      const anonymousUserId = getAnonymousUserId(null, socket);
-      socket.user = {
-        _id: anonymousUserId,
-        userName: `Anonymous_${socket.id.substring(0, 6)}`,
-        name: `Anonymous User`,
-        email: null,
-        isAdmin: false,
-        isAnonymous: true,
-      };
-      next();
-    }
-  });
-
+  // Handle new socket connections
   io.on('connection', (socket) => {
-    console.log(
-      `User ${socket.user.userName} connected with socket ID: ${socket.id}`
-    );
-
     // Store active user connection
     activeUsers.set(socket.user._id.toString(), {
       userId: socket.user._id,
@@ -175,33 +189,28 @@ const initializeSocketIO = (server) => {
       status: 'online',
     });
 
+    // Store user socket ID for easy access
     userSockets.set(socket.user._id.toString(), socket.id);
 
     // Store admin sockets separately for easy access
     if (socket.user.isAdmin) {
       adminSockets.set(socket.user._id.toString(), socket.id);
-      console.log(
-        `👨‍💼 Admin ${socket.user.userName} added to adminSockets map. Total admins: ${adminSockets.size}`
-      );
     }
 
     // Join user to their personal room
     socket.join(socket.user._id.toString());
 
-    // Join user to their support chat rooms
+    // Join user to their support chat rooms joinUserSupportChats
     joinUserSupportChats(socket);
 
     // If user is admin, send them all existing chats on connection
     if (socket.user.isAdmin) {
       setTimeout(async () => {
         try {
-          console.log(
-            `👨‍💼 Loading all chats for admin: ${socket.user.userName}`
-          );
           const chats = await Chat.find({})
             .populate('admin', 'userName name email')
             .sort({ updatedAt: -1 })
-            .limit(100); // Limit to prevent overwhelming the client
+            .limit(100);
 
           // For each chat, get the latest messages
           const chatsWithMessages = await Promise.all(
@@ -214,10 +223,7 @@ const initializeSocketIO = (server) => {
               const processedMessages = await Promise.all(
                 messages.map(async (msg) => {
                   const messageObj = msg.toObject();
-                  messageObj.sender = await populateMessageSender(
-                    messageObj,
-                    chat
-                  );
+                  messageObj.sender = populateMessageSender(messageObj, chat);
                   return messageObj;
                 })
               );
@@ -243,34 +249,25 @@ const initializeSocketIO = (server) => {
             })
           );
 
-          console.log(
-            `👨‍💼 Sending ${chatsWithMessages.length} chats with messages to admin`
-          );
-
           // Send all chat histories to the admin
           chatsWithMessages.forEach((chatObject) => {
             if (chatObject.messages && chatObject.messages.length > 0) {
-              // Send complete chat object with metadata
               socket.emit('chat_history', {
                 chatId: chatObject.chatId,
                 messages: chatObject.messages,
-                chat: chatObject, // Include complete chat metadata
+                chat: chatObject,
               });
             }
           });
         } catch (error) {
           console.error('Error loading chats for admin:', error);
         }
-      }, 1000); // Small delay to ensure socket is fully initialized
+      }, 1000);
     }
 
     // Handle creating a new support chat
     socket.on('create_support_chat', async (data) => {
       try {
-        console.log(
-          `🆕 User ${socket.user.userName} creating new support chat`
-        );
-
         // Check if user already has an active support chat
         const existingChat = await Chat.findOne({
           user: socket.user._id,
@@ -317,7 +314,7 @@ const initializeSocketIO = (server) => {
           return;
         }
 
-        // Create new chat
+        // Create new chat if no active chat exists with this user
         const newChat = await Chat.create({
           user: socket.user._id,
           subject: data.subject || 'Support Chat',
@@ -328,8 +325,6 @@ const initializeSocketIO = (server) => {
           userDisplayName: socket.user.name || socket.user.userName,
           userHandle: socket.user.userName || socket.user.name,
         });
-
-        console.log(`✅ Created new support chat: ${newChat._id}`);
 
         // Join the new chat room
         socket.join(newChat._id.toString());
@@ -359,9 +354,6 @@ const initializeSocketIO = (server) => {
     // Handle joining a specific support chat room
     socket.on('join_support_chat', async (chatId) => {
       try {
-        console.log(
-          `🔍 User ${socket.user.userName} attempting to join chat: ${chatId}`
-        );
         const chat = await Chat.findById(chatId);
         if (chat) {
           // Check if user has access to this chat
@@ -378,7 +370,7 @@ const initializeSocketIO = (server) => {
               typeof chat.user === 'string' && chat.user.startsWith('anon_');
 
             if (isUserAnonymous && isChatAnonymous) {
-              // Both are anonymous - allow access for now (in production, implement proper session management)
+              // Both are anonymous - allow access for now
               hasAccess = true;
             } else {
               // Exact match required for authenticated users
@@ -403,9 +395,6 @@ const initializeSocketIO = (server) => {
                   userDisplayName: socket.user.name,
                   userHandle: socket.user.userName || socket.user.name,
                 });
-                console.log(
-                  `✅ Updated chat ${chatId} with user name: ${socket.user.name}`
-                );
               } catch (updateError) {
                 console.error(
                   'Error updating chat with user name:',
@@ -420,18 +409,11 @@ const initializeSocketIO = (server) => {
                 createdAt: 1,
               });
 
-              console.log(
-                `📨 Processing ${messages.length} existing messages for chat ${chatId}`
-              );
-
               // Process messages to include proper sender information
               const processedMessages = await Promise.all(
                 messages.map(async (msg) => {
                   const messageObj = msg.toObject();
-                  messageObj.sender = await populateMessageSender(
-                    messageObj,
-                    chat
-                  );
+                  messageObj.sender = populateMessageSender(messageObj, chat);
                   return messageObj;
                 })
               );
@@ -463,14 +445,11 @@ const initializeSocketIO = (server) => {
     // Handle leaving a support chat room
     socket.on('leave_support_chat', (chatId) => {
       socket.leave(chatId);
-      console.log(`User ${socket.user.userName} left support chat: ${chatId}`);
     });
 
     // Handle sending a message in support chat
     socket.on('send_support_message', async (data) => {
-      console.log('🎯 Starting message processing...');
       try {
-        console.log('📨 Received send_support_message:', data);
         const {
           chatId,
           content,
@@ -486,12 +465,6 @@ const initializeSocketIO = (server) => {
           socket.emit('error', { message: 'Chat not found' });
           return;
         }
-
-        console.log('✅ Chat found:', chat._id);
-        console.log('🔍 Access check - User ID:', socket.user._id);
-        console.log('🔍 Access check - Chat User:', chat.user);
-        console.log('🔍 Access check - Is Admin:', socket.user.isAdmin);
-
         // Check access - admin has access to all, or user owns the chat
         let hasAccess = false;
         if (socket.user.isAdmin) {
@@ -514,15 +487,7 @@ const initializeSocketIO = (server) => {
           }
         }
 
-        console.log('🔍 Access result:', hasAccess);
-
         if (!hasAccess) {
-          console.log(
-            '❌ Access denied for user:',
-            socket.user._id,
-            'trying to access chat owned by:',
-            chat.user
-          );
           socket.emit('error', { message: 'Access denied' });
           return;
         }
@@ -587,10 +552,6 @@ const initializeSocketIO = (server) => {
 
         // If status changed due to auto-assignment, notify all participants
         if (statusChanged && updatedChat) {
-          console.log(
-            `🔄 Chat status changed from ${originalStatus} to ${updatedChat.status} due to admin auto-assignment`
-          );
-
           // Notify all participants about status change
           io.to(chatId).emit('support_chat_status_updated', {
             chatId,
@@ -636,7 +597,6 @@ const initializeSocketIO = (server) => {
             email: null,
             isAdmin: false,
           };
-          console.log(`📤 Using anonymous user info:`, populatedMessage.sender);
         } else {
           // Authenticated user (including admin) - always use socket user info to ensure consistency
           populatedMessage.sender = {
@@ -647,12 +607,8 @@ const initializeSocketIO = (server) => {
             name:
               socket.user.name || (socket.user.isAdmin ? 'Epic Realm' : 'User'),
             email: socket.user.email || null,
-            isAdmin: socket.user.isAdmin === true, // Ensure boolean value
+            isAdmin: socket.user.isAdmin === true,
           };
-          console.log(
-            `📤 Using authenticated user info (isAdmin: ${socket.user.isAdmin}):`,
-            populatedMessage.sender
-          );
         }
 
         // Emit message to participants in the chat
@@ -661,37 +617,16 @@ const initializeSocketIO = (server) => {
           // Emit to all admin sockets
           adminSockets.forEach((socketId, adminId) => {
             io.to(socketId).emit('new_support_message', populatedMessage);
-            console.log(
-              `📤 Emitting internal note to admin: ${adminId}`,
-              populatedMessage
-            );
           });
         } else {
           // Emit to the specific chat room
-          console.log(`📤 Emitting message to chat room: ${chatId}`);
-          console.log(
-            `📤 Message data:`,
-            JSON.stringify(populatedMessage, null, 2)
-          );
-          io.to(chatId).emit('new_support_message', populatedMessage);
 
-          // Also log who is in this room
-          const room = io.sockets.adapter.rooms.get(chatId);
-          console.log(
-            `👥 Users in chat room ${chatId}:`,
-            room ? Array.from(room) : 'No users'
-          );
+          io.to(chatId).emit('new_support_message', populatedMessage);
         }
 
         // Notify all admins about new user message (if sent by user)
         if (!socket.user.isAdmin && !isInternalNote) {
-          console.log(
-            `👨‍💼 Notifying ${adminSockets.size} admins about new user message`
-          );
           adminSockets.forEach((socketId, adminId) => {
-            console.log(
-              `📢 Sending notification to admin ${adminId} (socket: ${socketId})`
-            );
             io.to(socketId).emit('new_user_message_notification', {
               chatId,
               message: populatedMessage,
@@ -726,6 +661,7 @@ const initializeSocketIO = (server) => {
     // Handle typing indicators
     socket.on('support_typing_start', (data) => {
       const { chatId } = data;
+      console.log(`User ${socket.user.userName} is typing in chat: ${chatId}`);
       socket.to(chatId).emit('user_typing_support', {
         userId: socket.user._id,
         userName: socket.user.userName,
@@ -1365,43 +1301,6 @@ const initializeSocketIO = (server) => {
   });
 
   return io;
-};
-
-// Helper function to join user to their support chat rooms
-const joinUserSupportChats = async (socket) => {
-  try {
-    let userChats;
-
-    if (socket.user.isAdmin) {
-      // Admins join all active support chats
-      userChats = await Chat.find({
-        isActive: true,
-      }).select('_id');
-      console.log(
-        `🔧 Admin ${socket.user.userName} joining ${userChats.length} active chats:`,
-        userChats.map((c) => c._id.toString())
-      );
-    } else {
-      // Users join only their own support chats
-      userChats = await Chat.find({
-        user: socket.user._id,
-        isActive: true,
-      }).select('_id');
-    }
-
-    userChats.forEach((chat) => {
-      socket.join(chat._id.toString());
-      console.log(
-        `🔗 User ${socket.user.userName} joined chat room: ${chat._id.toString()}`
-      );
-    });
-
-    console.log(
-      `User ${socket.user.userName} joined ${userChats.length} support chat rooms`
-    );
-  } catch (error) {
-    console.error('Error joining user support chats:', error);
-  }
 };
 
 // Get active users

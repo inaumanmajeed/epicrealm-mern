@@ -21,7 +21,7 @@ const chatSchema = new Schema(
     priority: {
       type: String,
       enum: ['low', 'medium', 'high', 'urgent'],
-      default: 'medium',
+      default: 'low',
     },
     status: {
       type: String,
