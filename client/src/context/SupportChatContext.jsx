@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
+import {
+  refreshAuthToken,
+  clearLocalStorage,
+  getAccessToken,
+} from "../utils/tokenRefresh";
+import toast from "react-hot-toast";
 
 const SupportChatContext = createContext();
 
@@ -23,7 +29,7 @@ export const SupportChatProvider = ({ children }) => {
   const { user } = useAuth();
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken");
+    const accessToken = getAccessToken();
 
     // Clean up existing socket before creating new one
     if (socket) {
@@ -48,6 +54,81 @@ export const SupportChatProvider = ({ children }) => {
       !!accessToken
     );
     setSocket(socketInstance);
+
+    // Handle socket authentication errors with token refresh
+    socketInstance.on("auth_error", async (error) => {
+      console.log("Socket authentication error:", error);
+
+      if (
+        error.code === "TOKEN_EXPIRED" ||
+        error.type === "TokenExpiredError"
+      ) {
+        // Handle token expiration
+        console.error("JWT token expired - attempting to refresh token");
+
+        const refreshResult = await refreshAuthToken();
+
+        if (refreshResult.success) {
+          // Reconnect socket with new token - proper way
+          socketInstance.auth.token = refreshResult.tokens.accessToken;
+
+          // Disconnect and reconnect with a small delay to ensure clean reconnection
+          socketInstance.disconnect();
+          setTimeout(() => {
+            socketInstance.connect();
+          }, 100);
+        } else {
+          if (refreshResult.needsReauth) {
+            console.log(
+              "🔐 Refresh token expired - tokens cleared, connecting anonymously"
+            );
+            toast.warning(
+              "Your session has expired. You're now connected as an anonymous user.",
+              5000
+            );
+          } else {
+            console.log("🌐 Token refresh failed due to network/server error");
+            toast.error(
+              "Failed to refresh authentication for chat. Connection continues anonymously.",
+              5000
+            );
+          }
+
+          // Allow anonymous connection by setting token to null
+          socketInstance.auth.token = null;
+          socketInstance.disconnect();
+          setTimeout(() => {
+            socketInstance.connect();
+          }, 100);
+
+          // Optionally redirect to login for expired refresh tokens
+          // if (refreshResult.needsReauth) {
+          //   setTimeout(() => {
+          //     window.location.href = "/login";
+          //   }, 5000); // Give user time to see the message
+          // }
+        }
+      } else if (
+        error.code === "TOKEN_INVALID" ||
+        error.type === "JsonWebTokenError"
+      ) {
+        console.log("JWT token is invalid");
+        // Clear invalid tokens
+        clearLocalStorage();
+
+        // Reconnect as anonymous user
+        socketInstance.auth.token = null;
+        socketInstance.disconnect();
+        setTimeout(() => {
+          socketInstance.connect();
+        }, 100);
+
+        console.log("Invalid token - tokens cleared, connecting anonymously");
+        // window.location.href = "/login";
+      } else {
+        console.log("Other authentication error:", error);
+      }
+    });
 
     // Connection events
     socketInstance.on("connect", () => {

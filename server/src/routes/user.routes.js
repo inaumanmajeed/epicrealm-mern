@@ -20,6 +20,6 @@ router.route('/login').post(loginUser);
 router.route('/logout').post(verifyAccessToken, logoutUser);
 router
   .route('/refresh-user-token')
-  .post(verifyAccessToken, verifyRefreshToken, reassignAccessToken);
+  .post(verifyRefreshToken, reassignAccessToken);
 
 export default router;

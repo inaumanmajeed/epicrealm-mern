@@ -5,43 +5,46 @@ import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from '../constants.js';
 import { User } from '../models/user.model.js';
 
 export const verifyAccessToken = asyncHandler(async (req, res, next) => {
-  // Check for access token in Authorization header only
   const authHeader = req.header('Authorization');
   const token =
     authHeader && authHeader.startsWith('Bearer ')
       ? authHeader.split(' ')[1]
       : null;
-
-  // If token is not present, throw an error
   if (!token) {
-    throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access');
+    throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access @verifyAccessToken');
   }
-  // Verify the token and extract user information
   try {
     const decodedToken = await jwt.verify(token, ACCESS_TOKEN_SECRET);
     const user = await User.findById(decodedToken.id);
-
-    // If token is valid but user is not found, throw an error
     if (!user) {
       throw new ApiError(401, '👮🏻‍♂️ Invalid Access Token');
     }
-    // compare the token in the database with the one provided
     if (user.accessToken !== token) {
       throw new ApiError(401, '👮🏻‍♂️ Invalid Access Token');
     }
-    // Attach user to the request object for further use
     req.user = user;
     next();
   } catch (error) {
-    throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access');
+    throw new ApiError(
+      401,
+      `👮🏻‍♂️ Unauthorized Access @verifyAccessTokenCatch: ${error.message}`
+    );
   }
 });
 
 export const verifyRefreshToken = asyncHandler(async (req, res, next) => {
-  const incomingRefreshToken = req.body?.refreshToken;
-
+  const authHeader = req.header('Authorization');
+  const token =
+    authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : null;
+  if (!token) {
+    throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access @verifyRefreshToken');
+  }
+  const incomingRefreshToken =
+    req.header('x-refresh-token') || req.body?.refreshToken;
   if (!incomingRefreshToken) {
-    throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access');
+    throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access @verifyRefreshToken');
   }
 
   try {
@@ -50,18 +53,30 @@ export const verifyRefreshToken = asyncHandler(async (req, res, next) => {
       REFRESH_TOKEN_SECRET
     );
 
-    // Using the already set user (from verifyAccessToken), reuse it to avoid DB call
-    if (req.user && req.user.id === decodedRefreshToken.id) {
-      if (req.user.refreshToken === incomingRefreshToken) {
-        return next();
-      }
+    const user = await User.findById(decodedRefreshToken.id);
+    if (!user) {
+      throw new ApiError(
+        401,
+        '👮🏻‍♂️ User not found! decoding and finding user @verifyRefreshToken '
+      );
+    }
+
+    if (
+      user &&
+      user.accessToken === token &&
+      user.id === decodedRefreshToken.id &&
+      user.refreshToken === incomingRefreshToken
+    ) {
+      req.user = user;
+      return next();
     } else {
       throw new ApiError(401, '👮🏻‍♂️ Invalid Refresh Token');
     }
-    // If the refresh token is valid, proceed to the next middleware
-    next();
   } catch (error) {
-    throw new ApiError(401, '👮🏻‍♂️ Unauthorized Access');
+    throw new ApiError(
+      401,
+      `👮🏻‍♂️ Unauthorized Access @verifyRefreshTokenCatch ${error.message}`
+    );
   }
 });
 

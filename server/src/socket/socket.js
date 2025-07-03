@@ -5,44 +5,58 @@ import { ChatMessage } from '../models/chatMessage.model.js';
 import { User } from '../models/user.model.js';
 import { ACCESS_TOKEN_SECRET } from '../constants.js';
 import { getAnonymousUserId } from '../utils/chatUtils.js';
+import asyncHandler from '../utils/asyncHandler.js';
 
-// Helper function to populate message sender consistently
-async function populateMessageSender(messageObj, chatRecord = null) {
-  if (
-    typeof messageObj.sender === 'string' &&
-    messageObj.sender.startsWith('anon_')
-  ) {
-    // Anonymous user - use chat record for name info or defaults
-    return {
-      _id: messageObj.sender,
-      userName:
-        chatRecord?.userHandle ||
-        chatRecord?.userDisplayName ||
-        'Anonymous User',
-      name:
-        chatRecord?.userDisplayName ||
-        chatRecord?.userHandle ||
-        'Anonymous User',
-      email: null,
-      isAdmin: false,
-    };
-  } else {
-    // Authenticated user - manual lookup from database
-    try {
-      const user = await User.findById(messageObj.sender).select(
-        'userName name email isAdmin'
-      );
-      if (user) {
-        return {
-          _id: user._id,
-          userName: user.userName,
-          name: user.name,
-          email: user.email,
-          isAdmin: user.isAdmin === true, // Ensure boolean
-        };
-      } else {
-        // User not found in database - this shouldn't happen, but handle gracefully
-        console.warn(`User not found for message sender: ${messageObj.sender}`);
+// Helper function to populate message sender consistently || wrapper for response to client
+const populateMessageSender = asyncHandler(
+  async (messageObj, chatRecord = null) => {
+    if (
+      typeof messageObj.sender === 'string' &&
+      messageObj.sender.startsWith('anon_')
+    ) {
+      // Anonymous user - use chat record for name info or defaults
+      return {
+        _id: messageObj.sender,
+        userName:
+          chatRecord?.userHandle ||
+          chatRecord?.userDisplayName ||
+          'Anonymous User',
+        name:
+          chatRecord?.userDisplayName ||
+          chatRecord?.userHandle ||
+          'Anonymous User',
+        isAdmin: false,
+      };
+    } else {
+      // Authenticated user - manual lookup from database
+      try {
+        const user = await User.findById(messageObj.sender).select(
+          'userName name email isAdmin'
+        );
+        if (user) {
+          return {
+            _id: user._id,
+            userName: user.userName,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin === true, // ~ Ensure boolean value for isAdmin
+          };
+        } else {
+          // User not found in database - this shouldn't happen, but handle gracefully
+          console.log(
+            `User not found for message sender: ${messageObj.sender}`
+          );
+          return {
+            _id: messageObj.sender,
+            userName: 'Unknown User',
+            name: 'Unknown User',
+            email: null,
+            isAdmin: false,
+          };
+        }
+      } catch (err) {
+        console.error('Error looking up message sender:', err);
+        // Fallback with minimal info
         return {
           _id: messageObj.sender,
           userName: 'Unknown User',
@@ -51,19 +65,9 @@ async function populateMessageSender(messageObj, chatRecord = null) {
           isAdmin: false,
         };
       }
-    } catch (err) {
-      console.error('Error looking up message sender:', err);
-      // Fallback with minimal info
-      return {
-        _id: messageObj.sender,
-        userName: 'Unknown User',
-        name: 'Unknown User',
-        email: null,
-        isAdmin: false,
-      };
     }
   }
-}
+);
 
 // Store active socket connections
 const activeUsers = new Map();
@@ -124,6 +128,24 @@ const initializeSocketIO = (server) => {
       next();
     } catch (error) {
       console.error('Socket authentication error:', error.message);
+
+      // Check if it's a JWT-related error
+      const isJWTError =
+        error.name === 'JsonWebTokenError' ||
+        error.name === 'TokenExpiredError' ||
+        error.name === 'NotBeforeError';
+
+      if (isJWTError) {
+        // Pass JWT error to client but still allow connection as anonymous
+        socket.emit('auth_error', {
+          type: error.name,
+          message: error.message,
+          code:
+            error.name === 'TokenExpiredError'
+              ? 'TOKEN_EXPIRED'
+              : 'TOKEN_INVALID',
+        });
+      }
 
       // For invalid tokens, still allow as anonymous
       const anonymousUserId = getAnonymousUserId(null, socket);
