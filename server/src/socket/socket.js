@@ -661,23 +661,42 @@ const initializeSocketIO = (server) => {
     // Handle typing indicators
     socket.on('support_typing_start', (data) => {
       const { chatId } = data;
-      console.log(`User ${socket.user.userName} is typing in chat: ${chatId}`);
+      console.log(
+        `🔤 User ${socket.user.userName} is typing in chat: ${chatId}`
+      );
+      console.log(`🔤 Socket rooms:`, Array.from(socket.rooms));
+      console.log(`🔤 Broadcasting to chatId: ${chatId}`);
+
+      // Check if socket is actually in the chat room
+      if (!socket.rooms.has(chatId)) {
+        console.log(`❌ Socket ${socket.id} is not in chat room ${chatId}`);
+        // Auto-join the chat room if not already in it
+        socket.join(chatId);
+        console.log(`✅ Auto-joined socket to chat room ${chatId}`);
+      }
+
       socket.to(chatId).emit('user_typing_support', {
         userId: socket.user._id,
         userName: socket.user.userName,
         isAdmin: socket.user.isAdmin,
         chatId,
       });
+      console.log(`🔤 Typing start event broadcasted to room: ${chatId}`);
     });
 
     socket.on('support_typing_stop', (data) => {
       const { chatId } = data;
+      console.log(
+        `🔤 User ${socket.user.userName} stopped typing in chat: ${chatId}`
+      );
+
       socket.to(chatId).emit('user_stop_typing_support', {
         userId: socket.user._id,
         userName: socket.user.userName,
         isAdmin: socket.user.isAdmin,
         chatId,
       });
+      console.log(`🔤 Typing stop event broadcasted to room: ${chatId}`);
     });
 
     // Handle message read status for support chat

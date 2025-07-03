@@ -26,6 +26,7 @@ export const SupportChatProvider = ({ children }) => {
   const [chats, setChats] = useState({}); // Store complete chat objects
   const [unreadCounts, setUnreadCounts] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
+  const [typingTimeouts, setTypingTimeouts] = useState({});
   console.log("User is typing in chat:", typingUsers);
 
   const { user } = useAuth();
@@ -212,15 +213,79 @@ export const SupportChatProvider = ({ children }) => {
     });
 
     socketInstance.on("user_typing_support", (data) => {
-      setTypingUsers((prev) => ({
-        ...prev,
-        [data.chatId]: { ...data, isTyping: true },
-      }));
+      console.log("🔤 Received typing start event:", data);
+
+      // Don't show typing indicator for current user
+      const currentUserId = user?._id || `anon_${socketInstance.id}`;
+      if (data.userId === currentUserId) {
+        console.log("🔤 Ignoring own typing event");
+        return;
+      }
+
+      // Clear existing timeout for this chat
+      setTypingTimeouts((prev) => {
+        if (prev[data.chatId]) {
+          clearTimeout(prev[data.chatId]);
+        }
+
+        // Set new timeout to auto-clear typing indicator after 5 seconds
+        const timeoutId = setTimeout(() => {
+          console.log(
+            "🔤 Auto-clearing typing indicator for chat:",
+            data.chatId
+          );
+          setTypingUsers((prev) => {
+            const newState = { ...prev };
+            delete newState[data.chatId];
+            return newState;
+          });
+          setTypingTimeouts((prev) => {
+            const newTimeouts = { ...prev };
+            delete newTimeouts[data.chatId];
+            return newTimeouts;
+          });
+        }, 5000);
+
+        return {
+          ...prev,
+          [data.chatId]: timeoutId,
+        };
+      });
+
+      setTypingUsers((prev) => {
+        const updated = {
+          ...prev,
+          [data.chatId]: { ...data, isTyping: true },
+        };
+        console.log("🔤 Updated typingUsers:", updated);
+        return updated;
+      });
     });
+
     socketInstance.on("user_stop_typing_support", (data) => {
+      console.log("🔤 Received typing stop event:", data);
+
+      // Don't process typing stop for current user
+      const currentUserId = user?._id || `anon_${socketInstance.id}`;
+      if (data.userId === currentUserId) {
+        console.log("🔤 Ignoring own typing stop event");
+        return;
+      }
+
+      // Clear timeout
+      setTypingTimeouts((prev) => {
+        if (prev[data.chatId]) {
+          clearTimeout(prev[data.chatId]);
+        }
+        const newTimeouts = { ...prev };
+        delete newTimeouts[data.chatId];
+        return newTimeouts;
+      });
+
       setTypingUsers((prev) => {
         const newState = { ...prev };
         delete newState[data.chatId];
+        console.log("🔤 Updated typingUsers after stop:", newState);
         return newState;
       });
     });

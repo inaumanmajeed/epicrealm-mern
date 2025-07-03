@@ -35,8 +35,6 @@ const SupportChat = () => {
     unreadCounts,
     typingUsers,
   } = useSupportChat();
-  useEffect(() => {
-  });
 
   useEffect(() => {
     // Check if user is authenticated or if anonymous user has set a name
@@ -162,6 +160,7 @@ const SupportChat = () => {
     setNewMessage(e.target.value);
 
     if (!isTyping && chat) {
+      console.log("🔤 Starting typing for chat:", chat._id);
       setIsTyping(true);
       startTyping(chat._id);
     }
@@ -173,6 +172,7 @@ const SupportChat = () => {
 
     // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
+      console.log("🔤 Stopping typing for chat:", chat._id);
       setIsTyping(false);
       if (chat) {
         stopTyping(chat._id);
