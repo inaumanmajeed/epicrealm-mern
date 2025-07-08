@@ -1315,8 +1315,6 @@ const initializeSocketIO = (server) => {
         socket.emit('error', { message: 'Failed to delete all chats' });
       }
     });
-
-    // ...existing code...
   });
 
   return io;
